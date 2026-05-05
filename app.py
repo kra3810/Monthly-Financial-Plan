@@ -66,12 +66,12 @@ try:
     used_personal = val(3, 1)   # เซลล์ B4
     used_other    = val(4, 1)   # เซลล์ B5
     
-    central_remain = val(17, 1) # เซลล์ B18
+    central_remain = val(18, 1) # เซลล์ B19
     
-    budget_food     = val(21, 1) # เซลล์ B22
-    budget_personal = val(22, 1) # เซลล์ B23
-    budget_other    = val(23, 1) # เซลล์ B24
-    emergency_fund  = val(24, 1) # เซลล์ B25
+    budget_food     = val(22, 1) # เซลล์ B23
+    budget_personal = val(23, 1) # เซลล์ B24
+    budget_other    = val(24, 1) # เซลล์ B25
+    emergency_fund  = val(25, 1) # เซลล์ B26
 
 except Exception:
     # กรณีสลับเดือนแล้วพัง (เช่น ยังไม่มีการสร้างตารางในเดือนนั้น) ให้ล้างเป็น 0 ทั้งหมด
