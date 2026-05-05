@@ -79,9 +79,25 @@ except Exception:
 with st.sidebar:
     st.title("⚙️ การตั้งค่าคงที่")
     st.subheader("📥 เงินสนับสนุนจากที่บ้าน")
+    
     # ดึงค่าจากชีตมาใส่เป็นค่าเริ่มต้น
     m_allow = st.number_input("รับเงินจากที่บ้านเดือนนี้", min_value=0.0, step=100.0, value=monthly_allowance)
     a_allow = st.number_input("เงินที่รับมาสะสมแล้ว (จากบ้าน)", min_value=0.0, step=1000.0, value=accumulated_allowance)
+    
+    # เพิ่มปุ่มสำหรับอัปเดตกลับไปที่ Google Sheets
+    if st.button("อัปเดตเงินสนับสนุน", use_container_width=True):
+        try:
+            # อัปเดตช่อง F2 (เงินสนับสนุนเดือนนี้)
+            sheet.update_acell('F2', m_allow)
+            # อัปเดตช่อง B18 (เงินสะสม)
+            sheet.update_acell('B18', a_allow)
+            
+            st.success("✅ อัปเดตลง Sheets แล้ว!")
+            st.rerun() # รีเฟรชหน้าเว็บเพื่อให้ค่าใหม่แสดงผลทันที
+        except Exception as e:
+            st.error(f"เกิดข้อผิดพลาด: {e}")
+    
+    st.markdown("---")
     
     with st.expander("รายการตายตัวและเงินเก็บ (Fixed & Saving)"):
         st.write(f"- เงินเก็บสำรองฉุกเฉิน: {emergency_fund:,.0f} ฿")
@@ -89,7 +105,6 @@ with st.sidebar:
         st.write(f"- งบกิน: {budget_food:,.0f} ฿")
         st.write(f"- งบส่วนตัว: {budget_personal:,.0f} ฿")
         st.write(f"- อื่นๆ: {budget_other:,.0f} ฿")
-
 # --- 4. Dashboard & Input ---
 total_budget = budget_food + budget_personal + budget_other
 total_used = used_food + used_personal + used_other
