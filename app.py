@@ -49,28 +49,35 @@ with st.sidebar:
         st.write("- งบส่วนตัว: 900 ฿")
         st.write("- อื่นๆ: 300 ฿")
 
-# --- 3. ดึงข้อมูลตัวเลข (เจาะจงเซลล์เพื่อไม่ให้มั่ว) ---
+# --- 3. ดึงข้อมูลตัวเลข (ดึงตรงๆ ถ้าไม่มีค่าให้เป็น 0) ---
 try:
     sheet = spreadsheet.worksheet(selected_month)
     data = sheet.get_all_values()
 
-    # พิกัดตามไฟล์ แผนการเงินรายเดือน(1).xlsx
-    used_food = float(data[0][1].replace(',', '')) if data[0][1] else 0.0      # เซลล์ B1 (ค่ากินที่ใช้ไป)
-    used_personal = float(data[1][1].replace(',', '')) if data[1][1] else 0.0  # เซลล์ B2 (ใช้ส่วนตัวที่ใช้ไป)
-    used_other = float(data[2][1].replace(',', '')) if data[2][1] else 0.0     # เซลล์ B3 (อื่นๆ ที่ใช้ไป)
-    
-    central_remain = float(data[17][1].replace(',', '')) if data[17][1] else 0.0 # เซลล์ B18 (งบกลาง)
-    
-    # งบประมาณตั้งต้น (ตารางล่าง)
-    budget_food = float(data[21][1].replace(',', '')) if data[21][1] else 2000.0
-    budget_personal = float(data[22][1].replace(',', '')) if data[22][1] else 900.0
-    budget_other = float(data[23][1].replace(',', '')) if data[23][1] else 300.0
-    emergency_fund = float(data[24][1].replace(',', '')) if data[24][1] else 300.0
+    # ฟังก์ชันสั้นๆ สำหรับดึงค่า: ถ้าว่าง/Error ให้เป็น 0
+    def val(r, c):
+        try:
+            v = data[r][c].replace(',', '').strip()
+            return float(v) if v else 0.0
+        except: return 0.0
 
-except:
-    used_food, used_personal, used_other = 0.0, 0.0, 0.0
-    budget_food, budget_personal, budget_other, emergency_fund = 2000.0, 900.0, 300.0, 300.0
-    central_remain = 138000.0
+    # ดึงค่าตามพิกัดที่คุณทำไว้ในไฟล์ แผนการเงินรายเดือน(1).xlsx
+    used_food     = val(2, 1)   # เซลล์ B3
+    used_personal = val(3, 1)   # เซลล์ B4
+    used_other    = val(4, 1)   # เซลล์ B5
+    
+    central_remain = val(17, 1) # เซลล์ B18
+    
+    budget_food     = val(21, 1) # เซลล์ B22
+    budget_personal = val(22, 1) # เซลล์ B23
+    budget_other    = val(23, 1) # เซลล์ B24
+    emergency_fund  = val(24, 1) # เซลล์ B25
+
+except Exception:
+    # กรณีสลับเดือนแล้วพัง (เช่น ยังไม่มีการสร้างตารางในเดือนนั้น) ให้ล้างเป็น 0 ทั้งหมด
+    used_food = used_personal = used_other = 0.0
+    budget_food = budget_personal = budget_other = 0.0
+    central_remain = emergency_fund = 0.0
 
 # --- 4. Dashboard & Input ---
 total_budget = budget_food + budget_personal + budget_other
