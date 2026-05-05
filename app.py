@@ -179,27 +179,37 @@ oth_color  = "green" if (budget_other - used_other) >= 0 else "red"
 
 st.subheader(f"📝 บันทึกรายจ่ายใหม่ ({selected_month})")
 
-# เปลี่ยนสีข้อความด้วยรูปแบบ :color[text]
+# ช่องกรอกตัวเลข
 food_in = st.number_input(f"ค่ากิน - :{food_color}[{food_remain_text}]", min_value=0.0, step=1.0)
 pers_in = st.number_input(f"ใช้ส่วนตัว - :{pers_color}[{pers_remain_text}]", min_value=0.0, step=1.0)
 oth_in  = st.number_input(f"อื่นๆ - :{oth_color}[{oth_remain_text}]", min_value=0.0, step=1.0)
-note = st.text_input("หมายเหตุ")
 
-if st.button("บันทึกลง Google Sheets", use_container_width=True):
-    try:
-        # บันทึก วัน/เวลา/ปี แบบละเอียดลงช่องแรก (A)
-        time_stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        
-        # จัดเรียงข้อมูลเพื่อส่งไปต่อท้ายชีต: [เวลา, ค่ากิน, ค่าส่วนตัว, ค่าอื่นๆ, หมายเหตุ]
-        new_row = [time_stamp, food_in, pers_in, oth_in, note]
-        
-        # คำสั่งนี้จะไปหาแถวที่ว่างล่างสุด แล้วต่อคิวลงไปเรื่อยๆ ไม่ทับของเดิม
-        sheet.append_row(new_row)
-        
-        st.success("บันทึกข้อมูลเรียบร้อย!")
-        st.rerun()
-    except Exception as e:
-        st.error(f"เกิดข้อผิดพลาดในการบันทึก: {e}")
+# ช่องหมายเหตุ (เงื่อนไขหลักในการบันทึก)
+note = st.text_input("หมายเหตุ (ต้องระบุเพื่อบันทึก)")
+
+if st.button("บันทึกข้อมูล", use_container_width=True):
+    # ตรวจสอบว่ามีการใส่หมายเหตุหรือยัง
+    if not note.strip():
+        st.warning("⚠️ กรุณาใส่หมายเหตุก่อนบันทึกครับ")
+    else:
+        try:
+            # 1. อัปเดตยอดรวมในช่องสรุป (B3, B4, B5) เพื่อให้ยอดเงินบนหน้าเว็บเปลี่ยนทันที
+            if food_in > 0:
+                sheet.update_acell('B3', used_food + food_in)
+            if pers_in > 0:
+                sheet.update_acell('B4', used_personal + pers_in)
+            if oth_in > 0:
+                sheet.update_acell('B5', used_other + oth_in)
+
+            # 2. บันทึกประวัติลงแถวใหม่ (ล่างสุด) เพื่อเก็บไว้ดูย้อนหลัง
+            time_stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            new_row = [time_stamp, food_in, pers_in, oth_in, note]
+            sheet.append_row(new_row)
+
+            st.success("✅ บันทึกประวัติและอัปเดตยอดเงินเรียบร้อย!")
+            st.rerun()
+        except Exception as e:
+            st.error(f"เกิดข้อผิดพลาด: {e}")
 
 st.markdown("---")
 
