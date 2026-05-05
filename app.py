@@ -57,7 +57,7 @@ try:
     sep_emergency = val(12, 1)  # เซลล์ B13 (เงินเก็บสำรองที่แยกออกมา)
     actual_total  = val(13, 1)  # เซลล์ B14 (รวมงบที่มีจริงตอนนี้)
 
-    monthly_allowance = val(3, 4) # เซลล์ B17
+    monthly_allowance = val(3, 5) # เซลล์ B17
     accumulated_allowance = val(17, 1) # เซลล์ B18
     central_remain = val(18, 1) # เซลล์ B19
     
