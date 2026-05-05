@@ -104,4 +104,15 @@ if st.button("บันทึกลง Google Sheets", use_container_width=True)
         sheet.append_row(new_row)
         st.rerun()
     except Exception as e:
-        st.error(f"Error: {e}")
+        # ถ้าดึงข้อมูลพลาด หรือหาไม่เจอ ให้เซตทุกอย่างเป็น 0 ให้หมด
+        used_food = 0.0
+        used_personal = 0.0
+        used_other = 0.0
+        
+        # ส่วนงบประมาณตั้งต้น จะใส่เป็น 0 หรือค่าที่คุณตั้งไว้ก็ได้
+        budget_food = 2000.0 
+        budget_personal = 900.0
+        budget_other = 300.0
+        
+        # พิมพ์ error ออกมาดูเบาๆ ว่าทำไมมันถึงหลุดมาที่นี่
+        print(f"Error logic: {e}")
