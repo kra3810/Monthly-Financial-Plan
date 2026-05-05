@@ -129,11 +129,11 @@ st.markdown("---")
 # --- 5. ตรวจสอบเงินในมือ (เพิ่มใหม่) ---
 st.subheader("💵 ตรวจสอบเงินในมือ")
 # คำนวณส่วนต่าง (เอาเงินที่ควรมี ลบด้วย เงินที่มีจริง)
-# "เงินที่ควรมี" ในมือ คือ เงินเหลือใช้จ่าย
 expected_cash = remaining_balance
 diff = actual_total - expected_cash
 
-col_cash1, col_cash2, col_cash3 = st.columns(3)
+# แก้เหลือ 2 คอลัมน์ ลบส่วนสำรองออก
+col_cash1, col_cash2 = st.columns(2)
 with col_cash1:
     st.metric("เงินสด", f"{cash_on_hand:,.2f} ฿")
 with col_cash2:
