@@ -4,6 +4,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 import datetime
 
+st.write(f"กำลังดูข้อมูลของแท็บ: {selected_month}")
 st.set_page_config(page_title="Kla Finance v1.0", layout="centered")
 
 def get_gspread_client():
