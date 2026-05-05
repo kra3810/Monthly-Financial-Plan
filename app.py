@@ -131,13 +131,13 @@ total_used = used_food + used_personal + used_other
 # ดึงค่าเงินเหลือใช้จ่ายโดยตรงจากเซลล์ F3 ตามไฟล์
 remaining_balance = val(2, 5) 
 
-# คำนวณฐานงบประมาณที่แท้จริง (ใช้ไปแล้ว + ที่ยังเหลืออยู่)
-actual_total_budget = total_used + remaining_balance
+# คำนวณฐานงบที่แท้จริง โดยหัก "งบฉุกเฉินที่ตั้งไว้ (B26)" ออกจากเงินเหลือ 
+actual_total_budget = total_used + (remaining_balance - budget_emergency)
 
-# คำนวณเปอร์เซ็นต์ใหม่ อิงจากฐานเงินที่มีจริง
+# คำนวณเปอร์เซ็นต์
 percent_used = min((total_used / actual_total_budget) * 100, 100.0) if actual_total_budget > 0 else 0
 
-# สร้างตัวแปรดึงข้อความสถานะจากช่อง C13
+# สร้างตัวแปรดึงข้อความสถานะจากช่อง C13 ป้องกัน Error
 try:
     emergency_status = str(data[12][2]).strip()
 except Exception:
@@ -155,7 +155,6 @@ with col2:
 with col3:
     st.metric(label="งบกลางคงเหลือ", value=f"{central_remain:,.0f} ฿")
 st.markdown("---")
-
 # ฟังก์ชันดึงข้อความจากคอลัมน์ C (Index 2)
 def get_text(r, c):
     try: return str(data[r][c]).strip()
