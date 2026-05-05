@@ -31,7 +31,7 @@ try:
     st.query_params["month"] = selected_month
 
 except Exception as e:
-    st.error(f"Error: {e}")
+    st.error(f"ระบบขัดข้องในการเชื่อมต่อ Google Sheets: {e}")
     st.stop()
 
 # --- 3. ดึงข้อมูลตัวเลข (ดึงตรงๆ ถ้าไม่มีค่าให้เป็น 0) ---
@@ -39,23 +39,24 @@ try:
     sheet = spreadsheet.worksheet(selected_month)
     data = sheet.get_all_values()
 
-    # ฟังก์ชันสั้นๆ สำหรับดึงค่า: ถ้าว่าง/Error ให้เป็น 0
+    # ฟังก์ชันสั้นๆ สำหรับดึงค่า: ดัก Error แล้ว Print ออก Console
     def val(r, c):
         try:
             v = data[r][c].replace(',', '').strip()
             return float(v) if v else 0.0
-        except: return 0.0
+        except Exception as e:
+            print(f"Warning: ไม่สามารถดึงค่าจากพิกัด ({r},{c}) ได้ -> {e}")
+            return 0.0
 
-    # ดึงค่าตามพิกัดที่คุณทำไว้ในไฟล์ แผนการเงินรายเดือน(1).xlsx
+    # ดึงค่าตามพิกัด
     used_food     = val(2, 1)   # เซลล์ B3
     used_personal = val(3, 1)   # เซลล์ B4
     used_other    = val(4, 1)   # เซลล์ B5
     
-    # ดึงค่าส่วนเงินในมือ (เพิ่มใหม่)
-    cash_on_hand  = val(10, 1)  # เซลล์ B11 (เงินสดที่มี)
-    bank_transfer = val(11, 1)  # เซลล์ B12 (เงินโอนที่มี)
-    sep_emergency = val(12, 1)  # เซลล์ B13 (เงินเก็บสำรองที่แยกออกมา)
-    actual_total  = val(13, 1)  # เซลล์ B14 (รวมงบที่มีจริงตอนนี้)
+    cash_on_hand  = val(10, 1)  # เซลล์ B11
+    bank_transfer = val(11, 1)  # เซลล์ B12
+    sep_emergency = val(12, 1)  # เซลล์ B13
+    actual_total  = val(13, 1)  # เซลล์ B14
 
     monthly_allowance = val(1, 5) # เซลล์ F2
     accumulated_allowance = val(17, 1) # เซลล์ B18
@@ -67,34 +68,34 @@ try:
     emergency_fund  = val(12, 1) # เซลล์ B13
     budget_emergency = val(25, 1) # เซลล์ B26
 
-except Exception:
-    # กรณีสลับเดือนแล้วพัง (เช่น ยังไม่มีการสร้างตารางในเดือนนั้น) ให้ล้างเป็น 0 ทั้งหมด
+except Exception as e:
+    # เก็บ Log + แจ้งเตือนหน้าเว็บ
+    st.warning(f"⚠️ ไม่พบข้อมูลของเดือนนี้ หรือตารางยังไม่สมบูรณ์ (ระบบใช้ค่าเริ่มต้นเป็น 0) | Error: {e}")
+    print(f"Sheet Initialization Error: {e}")
+    
     used_food = used_personal = used_other = 0.0
     budget_food = budget_personal = budget_other = 0.0
     central_remain = emergency_fund = 0.0
-    monthly_allowance = 8000.0 # ค่าตั้งต้น
+    monthly_allowance = 8000.0 
     accumulated_allowance = 0.0
     cash_on_hand = bank_transfer = sep_emergency = actual_total = 0.0
 
 def auto_calc(key):
     try:
-        # ดึงข้อความในช่องมาคำนวณ แล้วเขียนทับด้วยผลลัพธ์เป็นเลขตัวเดียวทันที
         val = float(eval(str(st.session_state[key]).replace(',', '')))
         st.session_state[key] = f"{val:g}"
-    except:
-        pass # ถ้าสมการผิด ปล่อยไว้เหมือนเดิม
+    except Exception as e:
+        print(f"auto_calc error ({key}): {e}") # Print ลง Console เวลาสมการพัง
 
-# ฟังก์ชันนี้จะทำงานทันทีที่กด Enter (ก่อนที่เว็บจะโหลดใหม่)
 def auto_update(key, cell):
     try:
-        # ดึงสมการมาคิดเลข
         val = float(eval(str(st.session_state[key]).replace(',', '')))
-        # อัปเดตลง Sheets
         sheet.update_acell(cell, val)
-        # เปลี่ยนสมการยาวๆ ให้กลายเป็นเลขที่คิดเสร็จแล้ว
         st.session_state[key] = str(val)
-    except Exception:
-        pass # ถ้าพิมพ์มั่วๆ มาก็ช่างมัน ไม่พัง
+        st.toast(f"✅ อัปเดตข้อมูลช่อง {cell} เรียบร้อย!")
+    except Exception as e:
+        st.toast(f"❌ รูปแบบสมการไม่ถูกต้อง (ห้ามมีตัวอักษร)")
+        print(f"auto_update error ({key}): {e}")
 
 # --- 2. แถบข้าง (Sidebar) ---
 with st.sidebar:
@@ -107,7 +108,6 @@ with st.sidebar:
     if m_key not in st.session_state: st.session_state[m_key] = str(monthly_allowance)
     if a_key not in st.session_state: st.session_state[a_key] = str(accumulated_allowance)
         
-    # สังเกตว่ามี on_change=auto_update มันจะโยนไปเข้าฟังก์ชันด้านบนทันทีที่กด Enter!
     st.text_input("รับเงินจากบ้าน (พิมพ์สมการแล้วกด Enter)", key=m_key, on_change=auto_update, args=(m_key, 'F2'))
     st.text_input("เงินสะสม (พิมพ์สมการแล้วกด Enter)", key=a_key, on_change=auto_update, args=(a_key, 'B18'))
     
@@ -122,20 +122,15 @@ with st.sidebar:
         
 # --- 4. Dashboard & Input ---
 total_used = used_food + used_personal + used_other
-
-# ดึงค่าเงินเหลือใช้จ่ายโดยตรงจากเซลล์ F3 ตามไฟล์
 remaining_balance = val(2, 5) 
 
-# คำนวณฐานงบที่แท้จริง โดยหัก "งบฉุกเฉินที่ตั้งไว้ (B26)" ออกจากเงินเหลือ 
 actual_total_budget = total_used + (remaining_balance - budget_emergency)
-
-# คำนวณเปอร์เซ็นต์
 percent_used = min((total_used / actual_total_budget) * 100, 100.0) if actual_total_budget > 0 else 0
 
-# สร้างตัวแปรดึงข้อความสถานะจากช่อง C13 ป้องกัน Error
 try:
     emergency_status = str(data[12][2]).strip()
-except Exception:
+except Exception as e:
+    print(f"Warning: ดึงสถานะฉุกเฉินไม่ได้ -> {e}")
     emergency_status = ""
 
 st.title("💰 สรุปสถานะเงิน")
@@ -150,59 +145,59 @@ with col2:
 with col3:
     st.metric(label="งบกลางคงเหลือ", value=f"{central_remain:,.0f} ฿")
 st.markdown("---")
-# ฟังก์ชันดึงข้อความจากคอลัมน์ C (Index 2)
-def get_text(r, c):
-    try: return str(data[r][c]).strip()
-    except: return ""
 
-# ดึงข้อความจากเซลล์ C3, C4, C5
+def get_text(r, c):
+    try: 
+        return str(data[r][c]).strip()
+    except Exception as e: 
+        print(f"Warning: ดึงข้อความ ({r},{c}) ไม่ได้ -> {e}")
+        return ""
+
 food_remain_text = get_text(2, 2)  
 pers_remain_text = get_text(3, 2)  
 oth_remain_text  = get_text(4, 2)  
 
-# ก่อนแก้ (เก็บแค่วันที่)
-datetime.datetime.now().strftime("%Y-%m-%d")
-
-# หลังแก้ (เก็บครบ วัน-เดือน-ปี เวลา-นาที-วินาที)
-datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-# คำนวณส่วนต่างเพื่อกำหนดสี (เขียว = เหลือ, แดง = เกิน)
 food_color = "green" if (budget_food - used_food) >= 0 else "red"
 pers_color = "green" if (budget_personal - used_personal) >= 0 else "red"
 oth_color  = "green" if (budget_other - used_other) >= 0 else "red"
 
 st.subheader(f"📝 บันทึกรายจ่ายใหม่ ({selected_month})")
 
-# ช่องกรอกตัวเลข
 food_in = st.number_input(f"ค่ากิน - :{food_color}[{food_remain_text}]", min_value=0.0, step=1.0)
 pers_in = st.number_input(f"ใช้ส่วนตัว - :{pers_color}[{pers_remain_text}]", min_value=0.0, step=1.0)
 oth_in  = st.number_input(f"อื่นๆ - :{oth_color}[{oth_remain_text}]", min_value=0.0, step=1.0)
 
-# ช่องหมายเหตุ (เงื่อนไขหลักในการบันทึก)
-note = st.text_input("หมายเหตุ (ต้องระบุเพื่อบันทึก)")
+# เปลี่ยน Placeholder เพื่อสื่อสารว่าจะใช้ "-" ถ้าปล่อยว่าง
+note = st.text_input("หมายเหตุ (หากไม่ใส่ ระบบจะบันทึกเป็น '-')")
 
 if st.button("บันทึกข้อมูล", use_container_width=True):
-    try:
-        # 1. อัปเดตเงินรวม (ทำทุกครั้งที่มีการกรอกเลข)
-        if food_in > 0:
-            sheet.update_acell('B3', used_food + food_in)
-        if pers_in > 0:
-            sheet.update_acell('B4', used_personal + pers_in)
-        if oth_in > 0:
-            sheet.update_acell('B5', used_other + oth_in)
+    # ป้องกันการเผลอกดบันทึกตอนยอดเงินเป็น 0 ทั้งหมด
+    if food_in > 0 or pers_in > 0 or oth_in > 0:
+        try:
+            # 1. จัดรูปแบบเป็น Batch Update เพื่อลดการเรียก API ไปยัง Google Sheets
+            updates = []
+            if food_in > 0: updates.append({'range': 'B3', 'values': [[used_food + food_in]]})
+            if pers_in > 0: updates.append({'range': 'B4', 'values': [[used_personal + pers_in]]})
+            if oth_in > 0: updates.append({'range': 'B5', 'values': [[used_other + oth_in]]})
+            
+            if updates:
+                sheet.batch_update(updates)
 
-        # 2. บันทึกประวัติ (เช็กเงื่อนไข: จะ append_row เฉพาะตอนที่มี "หมายเหตุ" เท่านั้น)
-        if note.strip():
+            # 2. ตั้งค่า Default หมายเหตุและบันทึกประวัติทุกครั้ง
+            final_note = note.strip() if note.strip() else "-"
             time_stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            new_row = [time_stamp, food_in, pers_in, oth_in, note]
+            new_row = [time_stamp, food_in, pers_in, oth_in, final_note]
+            
             sheet.append_row(new_row)
-            st.success("✅ อัปเดตเงิน และบันทึกประวัติเรียบร้อย!")
-        else:
-            st.success("✅ อัปเดตเงินเรียบร้อย! (ไม่ได้ลงประวัติเพราะไม่มีหมายเหตุ)")
-
-        st.rerun()
-    except Exception as e:
-        st.error(f"เกิดข้อผิดพลาด: {e}")
+            
+            st.success("✅ อัปเดตเงิน และบันทึกประวัติลง Sheets เรียบร้อย!")
+            st.rerun()
+            
+        except Exception as e:
+            st.error(f"เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheets: {e}")
+            print(f"Update/Append Error: {e}")
+    else:
+        st.warning("⚠️ กรุณาระบุจำนวนเงินอย่างน้อย 1 รายการก่อนกดบันทึก")
 
 st.markdown("---")
 
@@ -221,7 +216,6 @@ with col_cash1:
 with col_cash2:
     st.text_input("เงินโอน (พิมพ์แล้วกด Enter)", key=b_key, on_change=auto_update, args=(b_key, 'B12'))
 
-# ดึงค่าล่าสุดมาคำนวณโชว์ (ถ้าลบจนว่าง ให้ใช้ค่าเดิม)
 try: cash_val = float(st.session_state[c_key])
 except: cash_val = cash_on_hand
 
