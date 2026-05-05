@@ -65,6 +65,7 @@ try:
     budget_personal = val(23, 1) # เซลล์ B24
     budget_other    = val(24, 1) # เซลล์ B25
     emergency_fund  = val(12, 1) # เซลล์ B13
+    budget_emergency = val(25, 1) # เซลล์ B26
 
 except Exception:
     # กรณีสลับเดือนแล้วพัง (เช่น ยังไม่มีการสร้างตารางในเดือนนั้น) ให้ล้างเป็น 0 ทั้งหมด
@@ -100,7 +101,7 @@ with st.sidebar:
     st.markdown("---")
     
     with st.expander("รายการตายตัวและเงินเก็บ (Fixed & Saving)"):
-        st.write(f"- เงินเก็บสำรองฉุกเฉิน: {emergency_fund:,.0f} ฿")
+        st.write(f"- เงินเก็บสำรองฉุกเฉิน: {budget_emergency:,.0f} ฿")
         st.write("- ค่าหอพัก: 4,500 ฿")
         st.write(f"- งบกิน: {budget_food:,.0f} ฿")
         st.write(f"- งบส่วนตัว: {budget_personal:,.0f} ฿")
