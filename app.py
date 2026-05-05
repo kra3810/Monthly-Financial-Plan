@@ -188,28 +188,27 @@ oth_in  = st.number_input(f"อื่นๆ - :{oth_color}[{oth_remain_text}]", 
 note = st.text_input("หมายเหตุ (ต้องระบุเพื่อบันทึก)")
 
 if st.button("บันทึกข้อมูล", use_container_width=True):
-    # ตรวจสอบว่ามีการใส่หมายเหตุหรือยัง
-    if not note.strip():
-        st.warning("⚠️ กรุณาใส่หมายเหตุก่อนบันทึกครับ")
-    else:
-        try:
-            # 1. อัปเดตยอดรวมในช่องสรุป (B3, B4, B5) เพื่อให้ยอดเงินบนหน้าเว็บเปลี่ยนทันที
-            if food_in > 0:
-                sheet.update_acell('B3', used_food + food_in)
-            if pers_in > 0:
-                sheet.update_acell('B4', used_personal + pers_in)
-            if oth_in > 0:
-                sheet.update_acell('B5', used_other + oth_in)
+    try:
+        # 1. อัปเดตเงินรวม (ทำทุกครั้งที่มีการกรอกเลข)
+        if food_in > 0:
+            sheet.update_acell('B3', used_food + food_in)
+        if pers_in > 0:
+            sheet.update_acell('B4', used_personal + pers_in)
+        if oth_in > 0:
+            sheet.update_acell('B5', used_other + oth_in)
 
-            # 2. บันทึกประวัติลงแถวใหม่ (ล่างสุด) เพื่อเก็บไว้ดูย้อนหลัง
+        # 2. บันทึกประวัติ (เช็กเงื่อนไข: จะ append_row เฉพาะตอนที่มี "หมายเหตุ" เท่านั้น)
+        if note.strip():
             time_stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             new_row = [time_stamp, food_in, pers_in, oth_in, note]
             sheet.append_row(new_row)
+            st.success("✅ อัปเดตเงิน และบันทึกประวัติเรียบร้อย!")
+        else:
+            st.success("✅ อัปเดตเงินเรียบร้อย! (ไม่ได้ลงประวัติเพราะไม่มีหมายเหตุ)")
 
-            st.success("✅ บันทึกประวัติและอัปเดตยอดเงินเรียบร้อย!")
-            st.rerun()
-        except Exception as e:
-            st.error(f"เกิดข้อผิดพลาด: {e}")
+        st.rerun()
+    except Exception as e:
+        st.error(f"เกิดข้อผิดพลาด: {e}")
 
 st.markdown("---")
 
