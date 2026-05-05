@@ -104,30 +104,12 @@ with st.sidebar:
     m_key = f"m_allow_{selected_month}"
     a_key = f"a_allow_{selected_month}"
     
-    # ดึงค่ามาตั้งต้น ถ้ายังไม่มีในระบบ
     if m_key not in st.session_state: st.session_state[m_key] = str(monthly_allowance)
     if a_key not in st.session_state: st.session_state[a_key] = str(accumulated_allowance)
         
-    m_allow_str = st.text_input("รับเงินจากบ้าน (พิมพ์สมการแล้วกด Enter)", key=m_key)
-    a_allow_str = st.text_input("เงินสะสม (พิมพ์สมการแล้วกด Enter)", key=a_key)
-    
-    try: m_val = float(eval(m_allow_str.replace(',', '')))
-    except: m_val = monthly_allowance
-        
-    try: a_val = float(eval(a_allow_str.replace(',', '')))
-    except: a_val = accumulated_allowance
-        
-    # ระบบบันทึกอัตโนมัติ: ถ้าค่าไม่เท่ากับใน Sheets ให้ส่งข้อมูลไปทับทันที (ไม่ต้องมีปุ่ม)
-    if m_val != monthly_allowance or a_val != accumulated_allowance:
-        try:
-            sheet.update_acell('F2', m_val)
-            sheet.update_acell('B18', a_val)
-            # สั่งยุบสมการให้กลายเป็นตัวเลขเพียวๆ
-            st.session_state[m_key] = str(m_val) 
-            st.session_state[a_key] = str(a_val)
-            st.rerun() # โหลดใหม่เพื่อให้หน้าเว็บอัปเดตและยุบเลข
-        except Exception as e:
-            st.error(f"Error: {e}")
+    # สังเกตว่ามี on_change=auto_update มันจะโยนไปเข้าฟังก์ชันด้านบนทันทีที่กด Enter!
+    st.text_input("รับเงินจากบ้าน (พิมพ์สมการแล้วกด Enter)", key=m_key, on_change=auto_update, args=(m_key, 'F2'))
+    st.text_input("เงินสะสม (พิมพ์สมการแล้วกด Enter)", key=a_key, on_change=auto_update, args=(a_key, 'B18'))
     
     st.markdown("---")
     
@@ -235,29 +217,17 @@ if b_key not in st.session_state: st.session_state[b_key] = str(bank_transfer)
 
 col_cash1, col_cash2 = st.columns(2)
 with col_cash1:
-    cash_in_str = st.text_input("เงินสด (พิมพ์แล้วกด Enter)", key=c_key)
+    st.text_input("เงินสด (พิมพ์แล้วกด Enter)", key=c_key, on_change=auto_update, args=(c_key, 'B11'))
 with col_cash2:
-    bank_in_str = st.text_input("เงินโอน (พิมพ์แล้วกด Enter)", key=b_key)
+    st.text_input("เงินโอน (พิมพ์แล้วกด Enter)", key=b_key, on_change=auto_update, args=(b_key, 'B12'))
 
-try: cash_val = float(eval(cash_in_str.replace(',', '')))
+# ดึงค่าล่าสุดมาคำนวณโชว์ (ถ้าลบจนว่าง ให้ใช้ค่าเดิม)
+try: cash_val = float(st.session_state[c_key])
 except: cash_val = cash_on_hand
 
-try: bank_val = float(eval(bank_in_str.replace(',', '')))
+try: bank_val = float(st.session_state[b_key])
 except: bank_val = bank_transfer
 
-# ระบบบันทึกอัตโนมัติ: ดักจับว่าตัวเลขต่างจากใน Sheets ไหม ถ้าต่าง ส่งเข้า Sheets ทันที!
-if cash_val != cash_on_hand or bank_val != bank_transfer:
-    try:
-        sheet.update_acell('B11', cash_val)
-        sheet.update_acell('B12', bank_val)
-        # สั่งยุบสมการให้สวยงาม
-        st.session_state[c_key] = str(cash_val) 
-        st.session_state[b_key] = str(bank_val)
-        st.rerun()
-    except Exception as e:
-        st.error(f"Error: {e}")
-
-# คำนวณเงินที่มีจริง และส่วนต่างโชว์ทันที
 new_actual_total = cash_val + bank_val
 expected_cash = remaining_balance
 diff = new_actual_total - expected_cash
