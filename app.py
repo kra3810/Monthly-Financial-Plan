@@ -120,6 +120,12 @@ food_remain_text = get_text(2, 2)
 pers_remain_text = get_text(3, 2)  
 oth_remain_text  = get_text(4, 2)  
 
+# ก่อนแก้ (เก็บแค่วันที่)
+datetime.datetime.now().strftime("%Y-%m-%d")
+
+# หลังแก้ (เก็บครบ วัน-เดือน-ปี เวลา-นาที-วินาที)
+datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
 # คำนวณส่วนต่างเพื่อกำหนดสี (เขียว = เหลือ, แดง = เกิน)
 food_color = "green" if (budget_food - used_food) >= 0 else "red"
 pers_color = "green" if (budget_personal - used_personal) >= 0 else "red"
@@ -135,8 +141,16 @@ note = st.text_input("หมายเหตุ")
 
 if st.button("บันทึกลง Google Sheets", use_container_width=True):
     try:
-        new_row = [datetime.datetime.now().strftime("%Y-%m-%d"), food_in, pers_in, oth_in, note]
+        # บันทึก วัน/เวลา/ปี แบบละเอียดลงช่องแรก (A)
+        time_stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        
+        # จัดเรียงข้อมูลเพื่อส่งไปต่อท้ายชีต: [เวลา, ค่ากิน, ค่าส่วนตัว, ค่าอื่นๆ, หมายเหตุ]
+        new_row = [time_stamp, food_in, pers_in, oth_in, note]
+        
+        # คำสั่งนี้จะไปหาแถวที่ว่างล่างสุด แล้วต่อคิวลงไปเรื่อยๆ ไม่ทับของเดิม
         sheet.append_row(new_row)
+        
+        st.success("บันทึกข้อมูลเรียบร้อย!")
         st.rerun()
     except Exception as e:
         st.error(f"เกิดข้อผิดพลาดในการบันทึก: {e}")
