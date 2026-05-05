@@ -114,10 +114,17 @@ except:
     emergency_status = ""
 
 # --- 4. Dashboard & Input ---
-total_budget = budget_food + budget_personal + budget_other
+# --- 4. Dashboard & Input ---
 total_used = used_food + used_personal + used_other
+
+# ดึงค่าเงินเหลือใช้จ่ายจากเซลล์ F3
 remaining_balance = val(2, 5) # เซลล์ F3
-percent_used = min((total_used / total_budget) * 100, 100.0) if total_budget > 0 else 0
+
+# หาฐานงบประมาณที่แท้จริง (ใช้ไปแล้ว + เหลืออยู่)
+actual_total_budget = total_used + remaining_balance
+
+# คำนวณเปอร์เซ็นต์ใหม่
+percent_used = min((total_used / actual_total_budget) * 100, 100.0) if actual_total_budget > 0 else 0
 
 st.title("💰 สรุปสถานะเงิน")
 st.markdown(f"**การใช้งบรายวันเดือนนี้ ({percent_used:.0f}%)**")
@@ -127,7 +134,6 @@ col1, col2, col3 = st.columns(3)
 with col1:
     st.metric(label="เงินเหลือใช้จ่าย", value=f"{remaining_balance:,.0f} ฿")
 with col2:
-    # เพิ่ม delta เพื่อโชว์ข้อความสถานะ และปิดสีอัตโนมัติ (delta_color="off") เพื่อให้โชว์สีตาม Emoji แทน
     st.metric(label="สำรองฉุกเฉิน", value=f"{emergency_fund:,.0f} ฿", delta=emergency_status, delta_color="off")
 with col3:
     st.metric(label="งบกลางคงเหลือ", value=f"{central_remain:,.0f} ฿")
