@@ -83,6 +83,19 @@ def auto_calc(key):
         st.session_state[key] = f"{val:g}"
     except:
         pass # ถ้าสมการผิด ปล่อยไว้เหมือนเดิม
+
+# ฟังก์ชันนี้จะทำงานทันทีที่กด Enter (ก่อนที่เว็บจะโหลดใหม่)
+def auto_update(key, cell):
+    try:
+        # ดึงสมการมาคิดเลข
+        val = float(eval(str(st.session_state[key]).replace(',', '')))
+        # อัปเดตลง Sheets
+        sheet.update_acell(cell, val)
+        # เปลี่ยนสมการยาวๆ ให้กลายเป็นเลขที่คิดเสร็จแล้ว
+        st.session_state[key] = str(val)
+    except Exception:
+        pass # ถ้าพิมพ์มั่วๆ มาก็ช่างมัน ไม่พัง
+
 # --- 2. แถบข้าง (Sidebar) ---
 with st.sidebar:
     st.title("⚙️ การตั้งค่าคงที่")
@@ -115,15 +128,6 @@ with st.sidebar:
             st.rerun() # โหลดใหม่เพื่อให้หน้าเว็บอัปเดตและยุบเลข
         except Exception as e:
             st.error(f"Error: {e}")
-    
-    st.markdown("---")
-    
-    with st.expander("รายการตายตัวและเงินเก็บ (Fixed & Saving)"):
-        st.write(f"- เงินเก็บสำรองฉุกเฉิน: {budget_emergency:,.0f} ฿")
-        st.write("- ค่าหอพัก: 4,500 ฿")
-        st.write(f"- งบกิน: {budget_food:,.0f} ฿")
-        st.write(f"- งบส่วนตัว: {budget_personal:,.0f} ฿")
-        st.write(f"- อื่นๆ: {budget_other:,.0f} ฿")
     
     st.markdown("---")
     
