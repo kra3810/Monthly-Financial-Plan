@@ -116,7 +116,7 @@ except:
 # --- 4. Dashboard & Input ---
 total_budget = budget_food + budget_personal + budget_other
 total_used = used_food + used_personal + used_other
-remaining_balance = total_budget - total_used
+remaining_balance = val(2, 5) # เซลล์ F3
 percent_used = min((total_used / total_budget) * 100, 100.0) if total_budget > 0 else 0
 
 st.title("💰 สรุปสถานะเงิน")
