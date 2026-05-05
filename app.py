@@ -106,6 +106,13 @@ with st.sidebar:
         st.write(f"- งบส่วนตัว: {budget_personal:,.0f} ฿")
         st.write(f"- อื่นๆ: {budget_other:,.0f} ฿")
 # --- 4. Dashboard & Input ---
+# ดึงข้อความสถานะจากช่อง C13 (แถวที่ 13 = Index 12, คอลัมน์ C = Index 2)
+try:
+    emergency_status = str(data[12][2]).strip()
+except:
+    emergency_status = ""
+
+# --- 4. Dashboard & Input ---
 total_budget = budget_food + budget_personal + budget_other
 total_used = used_food + used_personal + used_other
 remaining_balance = total_budget - total_used
@@ -119,7 +126,8 @@ col1, col2, col3 = st.columns(3)
 with col1:
     st.metric(label="เงินเหลือใช้จ่าย", value=f"{remaining_balance:,.0f} ฿")
 with col2:
-    st.metric(label="สำรองฉุกเฉิน", value=f"{emergency_fund:,.0f} ฿")
+    # เพิ่ม delta เพื่อโชว์ข้อความสถานะ และปิดสีอัตโนมัติ (delta_color="off") เพื่อให้โชว์สีตาม Emoji แทน
+    st.metric(label="สำรองฉุกเฉิน", value=f"{emergency_fund:,.0f} ฿", delta=emergency_status, delta_color="off")
 with col3:
     st.metric(label="งบกลางคงเหลือ", value=f"{central_remain:,.0f} ฿")
 
