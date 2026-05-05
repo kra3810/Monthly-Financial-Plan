@@ -34,21 +34,6 @@ except Exception as e:
     st.error(f"Error: {e}")
     st.stop()
 
-# --- 2. แถบข้าง (Sidebar) ที่หายไป ---
-with st.sidebar:
-    st.title("⚙️ การตั้งค่าคงที่")
-    st.subheader("📥 เงินสนับสนุนจากที่บ้าน")
-    # ดึงค่าจากชีตมาใส่เป็นค่าเริ่มต้น (ถ้ามี)
-    monthly_allowance = st.number_input("รับเงินจากที่บ้านเดือนนี้", min_value=0.0, step=100.0, value=8000.0)
-    accumulated_allowance = st.number_input("เงินที่รับมาสะสมแล้ว (จากบ้าน)", min_value=0.0, step=1000.0, value=0.0)
-    
-    with st.expander("รายการตายตัวและเงินเก็บ (Fixed & Saving)"):
-        st.write("- เงินเก็บสำรองฉุกเฉิน: 300 ฿") 
-        st.write("- ค่าหอพัก: 4,500 ฿")
-        st.write("- งบกิน: 2,000 ฿")
-        st.write("- งบส่วนตัว: 900 ฿")
-        st.write("- อื่นๆ: 300 ฿")
-
 # --- 3. ดึงข้อมูลตัวเลข (ดึงตรงๆ ถ้าไม่มีค่าให้เป็น 0) ---
 try:
     sheet = spreadsheet.worksheet(selected_month)
@@ -78,6 +63,21 @@ except Exception:
     used_food = used_personal = used_other = 0.0
     budget_food = budget_personal = budget_other = 0.0
     central_remain = emergency_fund = 0.0
+    
+# --- 2. แถบข้าง (Sidebar) ที่หายไป ---
+with st.sidebar:
+    st.title("⚙️ การตั้งค่าคงที่")
+    st.subheader("📥 เงินสนับสนุนจากที่บ้าน")
+    # ดึงค่าจากชีตมาใส่เป็นค่าเริ่มต้น (ถ้ามี)
+    monthly_allowance = st.number_input("รับเงินจากที่บ้านเดือนนี้", min_value=0.0, step=100.0, value=8000.0)
+    accumulated_allowance = st.number_input("เงินที่รับมาสะสมแล้ว (จากบ้าน)", min_value=0.0, step=1000.0, value=0.0)
+    
+    with st.expander("รายการตายตัวและเงินเก็บ (Fixed & Saving)"):
+        st.write(f"- เงินเก็บสำรองฉุกเฉิน: {emergency_fund:,.0f} ฿")
+        st.write("- ค่าหอพัก: 4,500 ฿")
+        st.write("- งบกิน: 2,000 ฿")
+        st.write("- งบส่วนตัว: 900 ฿")
+        st.write("- อื่นๆ: 300 ฿")
 
 # --- 4. Dashboard & Input ---
 total_budget = budget_food + budget_personal + budget_other
