@@ -2,21 +2,17 @@ import streamlit as st
 import pandas as pd
 import gspread
 from google.oauth2.service_account import Credentials
-import json
+import datetime
 
 st.set_page_config(page_title="Kla Finance v1.0", layout="centered")
 
 # --- การตั้งค่า Google Sheets API ---
-# ฟังก์ชันนี้ใช้ดึงข้อมูลจากไฟล์ JSON ที่เราจะไปใส่ใน Streamlit Secrets
 def get_gspread_client():
-    # ดึงข้อมูลจาก Secrets (ตั้งค่าตอน Deploy)
     credentials_dict = st.secrets["gcp_service_account"]
-    
     scopes = [
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive"
     ]
-    
     creds = Credentials.from_service_account_info(credentials_dict, scopes=scopes)
     client = gspread.authorize(creds)
     return client
@@ -39,15 +35,41 @@ with st.sidebar:
         st.write("- งบกิน: 2,000 ฿")
         st.write("- งบส่วนตัว: 900 ฿")
         st.write("- อื่นๆ: 300 ฿")
-    st.info("ระบบจะหักเงินเก็บสำรองฉุกเฉินและค่าหอพักออกก่อน นำยอดที่เหลือมาเป็นงบใช้จ่าย")
 
-# ตัวแปรจำลองข้อมูล (คุณต้องแก้ส่วนนี้ให้ดึงข้อมูลจาก gspread อีกครั้งเมื่อมั่นใจโครงสร้างชีต)
+# ตัวแปรจำลองงบกลาง (สามารถแก้ให้ดึงจาก Sheet ได้ในอนาคตถ้ามีตารางเก็บ)
 central_budget_total = 138000 
 central_budget_remaining = central_budget_total - accumulated_allowance 
-
 emergency_fund = 1000 
 budget = {"food": 2000, "personal": 900, "other": 300}
-used = {"food": 1500, "personal": 500, "other": 350} 
+
+# ==========================================
+# 🚀 ระบบดึงข้อมูลจาก Google Sheets ของจริง
+# ==========================================
+used_food, used_personal, used_other = 0.0, 0.0, 0.0
+
+try:
+    client = get_gspread_client()
+    # ดึงชีตตามเดือนที่เลือก
+    sheet = client.open("แผนการเงินรายเดือน").worksheet(selected_month)
+    records = sheet.get_all_values()
+    
+    # ถ้ามีข้อมูลมากกว่า 1 แถว (แปลว่ามีข้อมูลที่กรอกไปแล้ว ไม่ใช่มีแค่หัวตาราง)
+    if len(records) > 1:
+        # เอาข้อมูลตั้งแต่แถวที่ 2 มาทำ DataFrame
+        df = pd.DataFrame(records[1:]) 
+        
+        # สมมติโครงสร้างตาราง: คอลัมน์ 1=กิน, 2=ส่วนตัว, 3=อื่นๆ (Index เริ่มที่ 0)
+        # แปลงเป็นตัวเลข ถ้าช่องว่างให้เป็น 0 แล้วจับบวกกัน
+        used_food = pd.to_numeric(df[1], errors='coerce').fillna(0).sum()
+        used_personal = pd.to_numeric(df[2], errors='coerce').fillna(0).sum()
+        used_other = pd.to_numeric(df[3], errors='coerce').fillna(0).sum()
+
+except Exception as e:
+    st.warning(f"ยังไม่มีข้อมูลดึงจากชีต {selected_month} หรือเกิดข้อผิดพลาด: {e}")
+
+# อัปเดตตัวแปร used ด้วยข้อมูลจริงที่ดึงมา
+used = {"food": used_food, "personal": used_personal, "other": used_other}
+# ==========================================
 
 total_budget = sum(budget.values())
 total_used = sum(used.values())
@@ -93,24 +115,18 @@ with st.container():
     other = st.number_input(get_label("อื่นๆ", budget['other'], used['other']), min_value=0.0, step=1.0, value=0.0)
     note = st.text_input("หมายเหตุ (ถ้ามี)")
 
-    # ปรับปุ่มให้ลองเชื่อมต่อ Google Sheets ดู
     if st.button("บันทึกลง Google Sheets", use_container_width=True):
         try:
-            # 1. เชื่อมต่อ
             client = get_gspread_client()
-            
-            # 2. เปิดไฟล์ชีตของคุณ (เปลี่ยนชื่อตรงนี้ให้ตรงกับชื่อไฟล์บน Google Drive)
             sheet = client.open("แผนการเงินรายเดือน").worksheet(selected_month)
             
-            # 3. เตรียมข้อมูลที่จะบันทึก (ตัวอย่าง: เพิ่มลงไปเป็นแถวใหม่)
-            import datetime
             today_str = datetime.datetime.now().strftime("%Y-%m-%d")
             new_row = [today_str, food, personal, other, note]
             
-            # 4. เพิ่มแถวใหม่ต่อท้ายข้อมูลที่มีอยู่
             sheet.append_row(new_row)
+            # ล้างแคชเพื่อให้แอปรีเฟรชข้อมูลใหม่ทันทีหลังบันทึก
+            st.rerun() 
             
-            st.success(f"บันทึกยอดรวม {food + personal + other} ฿ ลงเดือน {selected_month} สำเร็จ!")
         except Exception as e:
             st.error(f"เกิดข้อผิดพลาดในการบันทึก: {e}")
 
