@@ -138,8 +138,6 @@ with col_cash1:
     st.metric("เงินสด", f"{cash_on_hand:,.2f} ฿")
 with col_cash2:
     st.metric("เงินโอน", f"{bank_transfer:,.2f} ฿")
-with col_cash3:
-    st.metric("แยกสำรองไว้", f"{sep_emergency:,.0f} ฿")
 
 col_tot1, col_tot2 = st.columns(2)
 with col_tot1:
