@@ -75,33 +75,35 @@ except Exception:
     monthly_allowance = 8000.0 # ค่าตั้งต้น
     accumulated_allowance = 0.0
     cash_on_hand = bank_transfer = sep_emergency = actual_total = 0.0
-    
+
+def auto_calc(key):
+    try:
+        # ดึงข้อความในช่องมาคำนวณ แล้วเขียนทับด้วยผลลัพธ์เป็นเลขตัวเดียวทันที
+        val = float(eval(str(st.session_state[key]).replace(',', '')))
+        st.session_state[key] = f"{val:g}"
+    except:
+        pass # ถ้าสมการผิด ปล่อยไว้เหมือนเดิม
 # --- 2. แถบข้าง (Sidebar) ---
 with st.sidebar:
     st.title("⚙️ การตั้งค่าคงที่")
     st.subheader("📥 เงินสนับสนุนจากที่บ้าน")
     
-    # ดึงค่ามาแปลงเป็น string ก่อน
-    m_allow_str = st.text_input("รับเงินจากบ้านเดือนนี้ (พิมพ์บวกเลขได้)", value=str(monthly_allowance))
-    try:
-        m_allow_val = float(eval(m_allow_str.replace(',', '')))
-        st.markdown(f"**ยอดรวม: :green[{m_allow_val:,.0f} ฿]**") # โชว์ยอดทันที
-    except:
-        m_allow_val = monthly_allowance
-        st.error("สมการผิดพลาด")
-
-    a_allow_str = st.text_input("เงินสะสมแล้ว (พิมพ์บวกเลขได้)", value=str(accumulated_allowance))
-    try:
-        a_allow_val = float(eval(a_allow_str.replace(',', '')))
-        st.markdown(f"**ยอดรวม: :green[{a_allow_val:,.0f} ฿]**") # โชว์ยอดทันที
-    except:
-        a_allow_val = accumulated_allowance
-        st.error("สมการผิดพลาด")
+    # สร้าง Key เฉพาะของแต่ละเดือน ป้องกันค่าค้างเวลาสลับเดือน
+    m_key = f"m_allow_{selected_month}"
+    a_key = f"a_allow_{selected_month}"
+    
+    # ดึงค่าเริ่มต้นมาใส่
+    if m_key not in st.session_state: st.session_state[m_key] = str(monthly_allowance)
+    if a_key not in st.session_state: st.session_state[a_key] = str(accumulated_allowance)
+    
+    # ช่องกรอก: พิมพ์สมการได้ พอกด Enter หรือคลิกที่อื่น มันจะยุบเป็นเลขตัวเดียวทันที
+    st.text_input("รับเงินจากบ้านเดือนนี้", key=m_key, on_change=auto_calc, args=(m_key,))
+    st.text_input("เงินที่รับมาสะสมแล้ว", key=a_key, on_change=auto_calc, args=(a_key,))
     
     if st.button("อัปเดตเงินสนับสนุน", use_container_width=True):
         try:
-            sheet.update_acell('F2', m_allow_val)
-            sheet.update_acell('B18', a_allow_val)
+            sheet.update_acell('F2', float(st.session_state[m_key]))
+            sheet.update_acell('B18', float(st.session_state[a_key]))
             st.success("✅ อัปเดตลง Sheets แล้ว!")
             st.rerun() 
         except Exception as e:
@@ -214,24 +216,26 @@ st.markdown("---")
 # --- 5. ตรวจสอบเงินในมือ (เพิ่มใหม่แบบแก้ไขได้) ---
 st.subheader("💵 ตรวจสอบเงินในมือ")
 
+c_key = f"cash_{selected_month}"
+b_key = f"bank_{selected_month}"
+
+if c_key not in st.session_state: st.session_state[c_key] = str(cash_on_hand)
+if b_key not in st.session_state: st.session_state[b_key] = str(bank_transfer)
+
 col_cash1, col_cash2 = st.columns(2)
 with col_cash1:
-    cash_in_str = st.text_input("เงินสด (พิมพ์บวกเลขได้)", value=str(cash_on_hand))
-    try:
-        cash_in_val = float(eval(cash_in_str.replace(',', '')))
-        st.caption(f"**= :green[{cash_in_val:,.2f} ฿]**")
-    except:
-        cash_in_val = cash_on_hand
-
+    st.text_input("เงินสด", key=c_key, on_change=auto_calc, args=(c_key,))
 with col_cash2:
-    bank_in_str = st.text_input("เงินโอน (พิมพ์บวกเลขได้)", value=str(bank_transfer))
-    try:
-        bank_in_val = float(eval(bank_in_str.replace(',', '')))
-        st.caption(f"**= :green[{bank_in_val:,.2f} ฿]**")
-    except:
-        bank_in_val = bank_transfer
+    st.text_input("เงินโอน", key=b_key, on_change=auto_calc, args=(b_key,))
 
-# คำนวณเงินที่มีจริง และส่วนต่างทันที
+# คำนวณเงินที่มีจริง และส่วนต่าง
+try:
+    cash_in_val = float(st.session_state[c_key])
+    bank_in_val = float(st.session_state[b_key])
+except:
+    cash_in_val = cash_on_hand
+    bank_in_val = bank_transfer
+
 new_actual_total = cash_in_val + bank_in_val
 expected_cash = remaining_balance
 diff = new_actual_total - expected_cash
@@ -246,7 +250,7 @@ if st.button("อัปเดตเงินในมือ", use_container_widt
     try:
         sheet.update_acell('B11', cash_in_val)
         sheet.update_acell('B12', bank_in_val)
-        st.success("อัปเดตยอดเงินในมือเรียบร้อย!")
+        st.success("✅ อัปเดตยอดเงินในมือเรียบร้อย!")
         st.rerun()
     except Exception as e:
         st.error(f"เกิดข้อผิดพลาดในการบันทึก: {e}")
