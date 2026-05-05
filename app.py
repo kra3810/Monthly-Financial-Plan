@@ -106,25 +106,16 @@ with st.sidebar:
         st.write(f"- งบกิน: {budget_food:,.0f} ฿")
         st.write(f"- งบส่วนตัว: {budget_personal:,.0f} ฿")
         st.write(f"- อื่นๆ: {budget_other:,.0f} ฿")
+        
 # --- 4. Dashboard & Input ---
-# ดึงข้อความสถานะจากช่อง C13 (แถวที่ 13 = Index 12, คอลัมน์ C = Index 2)
-try:
-    emergency_status = str(data[12][2]).strip()
-except:
-    emergency_status = ""
+total_budget = budget_food + budget_personal + budget_other # งบที่ตั้งไว้ (3,500)
+total_used = used_food + used_personal + used_other # ใช้ไปแล้ว (3,237)
 
-# --- 4. Dashboard & Input ---
-# --- 4. Dashboard & Input ---
-total_used = used_food + used_personal + used_other
+# โควต้าเงินเหลือใช้จ่ายแบบรายวัน (ไม่รวมเงินฉุกเฉิน)
+daily_remaining = total_budget - total_used # จะได้ 263 บาท
 
-# ดึงค่าเงินเหลือใช้จ่ายจากเซลล์ F3
-remaining_balance = val(2, 5) # เซลล์ F3
-
-# หาฐานงบประมาณที่แท้จริง (ใช้ไปแล้ว + เหลืออยู่)
-actual_total_budget = total_used + remaining_balance
-
-# คำนวณเปอร์เซ็นต์ใหม่
-percent_used = min((total_used / actual_total_budget) * 100, 100.0) if actual_total_budget > 0 else 0
+# เปอร์เซ็นต์การใช้ (ตามโควต้างบรายวัน)
+percent_used = min((total_used / total_budget) * 100, 100.0) if total_budget > 0 else 0
 
 st.title("💰 สรุปสถานะเงิน")
 st.markdown(f"**การใช้งบรายวันเดือนนี้ ({percent_used:.0f}%)**")
@@ -132,9 +123,11 @@ st.progress(percent_used / 100.0)
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    st.metric(label="เงินเหลือใช้จ่าย", value=f"{remaining_balance:,.0f} ฿")
+    # เปลี่ยนมาโชว์โควต้าที่เหลือจริง เพื่อไม่ให้หลอกตาตัวเอง
+    st.metric(label="โควต้าเหลือใช้ (ก่อนกินเงินสำรอง)", value=f"{daily_remaining:,.0f} ฿")
 with col2:
-    st.metric(label="สำรองฉุกเฉิน", value=f"{emergency_fund:,.0f} ฿", delta=emergency_status, delta_color="off")
+    # โชว์เงินที่ดึงมาเก็บสำรองไว้จริงๆ (ช่อง B13) พร้อมแจ้งเตือนสีจาก C13
+    st.metric(label="สำรองที่แยกไว้", value=f"{sep_emergency:,.0f} ฿", delta=emergency_status, delta_color="off")
 with col3:
     st.metric(label="งบกลางคงเหลือ", value=f"{central_remain:,.0f} ฿")
 
