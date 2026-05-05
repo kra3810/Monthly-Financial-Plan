@@ -81,23 +81,31 @@ with st.sidebar:
     st.title("⚙️ การตั้งค่าคงที่")
     st.subheader("📥 เงินสนับสนุนจากที่บ้าน")
     
-    # เปลี่ยนเป็นช่องข้อความเพื่อให้พิมพ์บวกเลขได้
-    m_allow_str = st.text_input("รับเงินจากบ้านเดือนนี้ (พิมพ์บวกเลขได้ เช่น 4000+3000)", value=str(monthly_allowance))
+    # ดึงค่ามาแปลงเป็น string ก่อน
+    m_allow_str = st.text_input("รับเงินจากบ้านเดือนนี้ (พิมพ์บวกเลขได้)", value=str(monthly_allowance))
+    try:
+        m_allow_val = float(eval(m_allow_str.replace(',', '')))
+        st.markdown(f"**ยอดรวม: :green[{m_allow_val:,.0f} ฿]**") # โชว์ยอดทันที
+    except:
+        m_allow_val = monthly_allowance
+        st.error("สมการผิดพลาด")
+
     a_allow_str = st.text_input("เงินสะสมแล้ว (พิมพ์บวกเลขได้)", value=str(accumulated_allowance))
+    try:
+        a_allow_val = float(eval(a_allow_str.replace(',', '')))
+        st.markdown(f"**ยอดรวม: :green[{a_allow_val:,.0f} ฿]**") # โชว์ยอดทันที
+    except:
+        a_allow_val = accumulated_allowance
+        st.error("สมการผิดพลาด")
     
     if st.button("อัปเดตเงินสนับสนุน", use_container_width=True):
         try:
-            # คำนวณสมการที่พิมพ์เข้ามา
-            m_allow_val = float(eval(m_allow_str.replace(',', '')))
-            a_allow_val = float(eval(a_allow_str.replace(',', '')))
-            
             sheet.update_acell('F2', m_allow_val)
             sheet.update_acell('B18', a_allow_val)
-            
             st.success("✅ อัปเดตลง Sheets แล้ว!")
             st.rerun() 
         except Exception as e:
-            st.error(f"กรุณาพิมพ์ตัวเลขหรือสมการให้ถูกต้อง (ห้ามมีตัวอักษร): {e}")
+            st.error(f"เกิดข้อผิดพลาด: {e}")
     
     st.markdown("---")
     
@@ -200,18 +208,22 @@ st.subheader("💵 ตรวจสอบเงินในมือ")
 
 col_cash1, col_cash2 = st.columns(2)
 with col_cash1:
-    cash_in_str = st.text_input("เงินสด (พิมพ์บวกเลขได้ เช่น 100+50)", value=str(cash_on_hand))
+    cash_in_str = st.text_input("เงินสด (พิมพ์บวกเลขได้)", value=str(cash_on_hand))
+    try:
+        cash_in_val = float(eval(cash_in_str.replace(',', '')))
+        st.caption(f"**= :green[{cash_in_val:,.2f} ฿]**")
+    except:
+        cash_in_val = cash_on_hand
+
 with col_cash2:
     bank_in_str = st.text_input("เงินโอน (พิมพ์บวกเลขได้)", value=str(bank_transfer))
+    try:
+        bank_in_val = float(eval(bank_in_str.replace(',', '')))
+        st.caption(f"**= :green[{bank_in_val:,.2f} ฿]**")
+    except:
+        bank_in_val = bank_transfer
 
-# คำนวณค่าระหว่างที่กำลังพิมพ์ ป้องกัน Error หน้าเว็บพัง
-try:
-    cash_in_val = float(eval(cash_in_str.replace(',', '')))
-    bank_in_val = float(eval(bank_in_str.replace(',', '')))
-except:
-    cash_in_val = cash_on_hand
-    bank_in_val = bank_transfer
-
+# คำนวณเงินที่มีจริง และส่วนต่างทันที
 new_actual_total = cash_in_val + bank_in_val
 expected_cash = remaining_balance
 diff = new_actual_total - expected_cash
