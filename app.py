@@ -75,9 +75,9 @@ with st.sidebar:
     with st.expander("รายการตายตัวและเงินเก็บ (Fixed & Saving)"):
         st.write(f"- เงินเก็บสำรองฉุกเฉิน: {emergency_fund:,.0f} ฿")
         st.write("- ค่าหอพัก: 4,500 ฿")
-        st.write("- งบกิน: 2,000 ฿")
-        st.write("- งบส่วนตัว: 900 ฿")
-        st.write("- อื่นๆ: 300 ฿")
+        st.write(f"- งบกิน: {budget_food:,.0f} ฿")
+        st.write(f"- งบส่วนตัว: {budget_personal:,.0f} ฿")
+        st.write(f"- อื่นๆ: {budget_other:,.0f} ฿")
 
 # --- 4. Dashboard & Input ---
 total_budget = budget_food + budget_personal + budget_other
