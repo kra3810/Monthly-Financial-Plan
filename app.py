@@ -88,32 +88,33 @@ with st.sidebar:
     st.title("⚙️ การตั้งค่าคงที่")
     st.subheader("📥 เงินสนับสนุนจากที่บ้าน")
     
-    m_allow_str = st.text_input("รับเงินจากบ้านเดือนนี้ (พิมพ์สมการได้)", value=str(monthly_allowance))
-    try:
-        m_allow_val = float(eval(m_allow_str.replace(',', '')))
-        # ถ้ามีการพิมพ์บวกเลข จะมีข้อความโชว์ยอดรวมให้ดูข้างใต้ทันที
-        if str(m_allow_val) != m_allow_str and "+" in m_allow_str or "-" in m_allow_str:
-            st.caption(f"✨ ยอดรวมที่จะบันทึก: :green[{m_allow_val:,.0f} ฿]")
-    except:
-        m_allow_val = monthly_allowance
-
-    a_allow_str = st.text_input("เงินสะสมแล้ว (พิมพ์สมการได้)", value=str(accumulated_allowance))
-    try:
-        a_allow_val = float(eval(a_allow_str.replace(',', '')))
-        if str(a_allow_val) != a_allow_str and "+" in a_allow_str or "-" in a_allow_str:
-            st.caption(f"✨ ยอดรวมที่จะบันทึก: :green[{a_allow_val:,.0f} ฿]")
-    except:
-        a_allow_val = accumulated_allowance
+    m_key = f"m_allow_{selected_month}"
+    a_key = f"a_allow_{selected_month}"
     
-    if st.button("อัปเดตเงินสนับสนุน", use_container_width=True):
+    # ดึงค่ามาตั้งต้น ถ้ายังไม่มีในระบบ
+    if m_key not in st.session_state: st.session_state[m_key] = str(monthly_allowance)
+    if a_key not in st.session_state: st.session_state[a_key] = str(accumulated_allowance)
+        
+    m_allow_str = st.text_input("รับเงินจากบ้าน (พิมพ์สมการแล้วกด Enter)", key=m_key)
+    a_allow_str = st.text_input("เงินสะสม (พิมพ์สมการแล้วกด Enter)", key=a_key)
+    
+    try: m_val = float(eval(m_allow_str.replace(',', '')))
+    except: m_val = monthly_allowance
+        
+    try: a_val = float(eval(a_allow_str.replace(',', '')))
+    except: a_val = accumulated_allowance
+        
+    # ระบบบันทึกอัตโนมัติ: ถ้าค่าไม่เท่ากับใน Sheets ให้ส่งข้อมูลไปทับทันที (ไม่ต้องมีปุ่ม)
+    if m_val != monthly_allowance or a_val != accumulated_allowance:
         try:
-            # นำค่าที่บวกเสร็จแล้วส่งเข้า Sheets ทันที
-            sheet.update_acell('F2', m_allow_val)
-            sheet.update_acell('B18', a_allow_val)
-            st.success("✅ อัปเดตลง Sheets แล้ว!")
-            st.rerun() # รีโหลดหน้าเว็บเพื่อให้ช่องกรอกยุบเหลือแค่ตัวเลขเพียวๆ
+            sheet.update_acell('F2', m_val)
+            sheet.update_acell('B18', a_val)
+            # สั่งยุบสมการให้กลายเป็นตัวเลขเพียวๆ
+            st.session_state[m_key] = str(m_val) 
+            st.session_state[a_key] = str(a_val)
+            st.rerun() # โหลดใหม่เพื่อให้หน้าเว็บอัปเดตและยุบเลข
         except Exception as e:
-            st.error(f"เกิดข้อผิดพลาด: {e}")
+            st.error(f"Error: {e}")
     
     st.markdown("---")
     
@@ -222,27 +223,38 @@ st.markdown("---")
 # --- 5. ตรวจสอบเงินในมือ (เพิ่มใหม่แบบแก้ไขได้) ---
 st.subheader("💵 ตรวจสอบเงินในมือ")
 
+c_key = f"cash_{selected_month}"
+b_key = f"bank_{selected_month}"
+
+if c_key not in st.session_state: st.session_state[c_key] = str(cash_on_hand)
+if b_key not in st.session_state: st.session_state[b_key] = str(bank_transfer)
+
 col_cash1, col_cash2 = st.columns(2)
 with col_cash1:
-    cash_in_str = st.text_input("เงินสด (พิมพ์บวกเลขได้)", value=str(cash_on_hand))
-    try:
-        cash_in_val = float(eval(cash_in_str.replace(',', '')))
-        if str(cash_in_val) != cash_in_str and "+" in cash_in_str or "-" in cash_in_str:
-            st.caption(f"✨ = :green[{cash_in_val:,.2f} ฿]")
-    except:
-        cash_in_val = cash_on_hand
-
+    cash_in_str = st.text_input("เงินสด (พิมพ์แล้วกด Enter)", key=c_key)
 with col_cash2:
-    bank_in_str = st.text_input("เงินโอน (พิมพ์บวกเลขได้)", value=str(bank_transfer))
+    bank_in_str = st.text_input("เงินโอน (พิมพ์แล้วกด Enter)", key=b_key)
+
+try: cash_val = float(eval(cash_in_str.replace(',', '')))
+except: cash_val = cash_on_hand
+
+try: bank_val = float(eval(bank_in_str.replace(',', '')))
+except: bank_val = bank_transfer
+
+# ระบบบันทึกอัตโนมัติ: ดักจับว่าตัวเลขต่างจากใน Sheets ไหม ถ้าต่าง ส่งเข้า Sheets ทันที!
+if cash_val != cash_on_hand or bank_val != bank_transfer:
     try:
-        bank_in_val = float(eval(bank_in_str.replace(',', '')))
-        if str(bank_in_val) != bank_in_str and "+" in bank_in_str or "-" in bank_in_str:
-            st.caption(f"✨ = :green[{bank_in_val:,.2f} ฿]")
-    except:
-        bank_in_val = bank_transfer
+        sheet.update_acell('B11', cash_val)
+        sheet.update_acell('B12', bank_val)
+        # สั่งยุบสมการให้สวยงาม
+        st.session_state[c_key] = str(cash_val) 
+        st.session_state[b_key] = str(bank_val)
+        st.rerun()
+    except Exception as e:
+        st.error(f"Error: {e}")
 
 # คำนวณเงินที่มีจริง และส่วนต่างโชว์ทันที
-new_actual_total = cash_in_val + bank_in_val
+new_actual_total = cash_val + bank_val
 expected_cash = remaining_balance
 diff = new_actual_total - expected_cash
 
@@ -251,12 +263,3 @@ with col_tot1:
     st.metric("เงินที่มีจริงตอนนี้", f"{new_actual_total:,.2f} ฿")
 with col_tot2:
     st.metric("ส่วนต่าง", f"{diff:,.2f} ฿", delta=f"{diff:,.2f} ฿")
-
-if st.button("อัปเดตเงินในมือ", use_container_width=True):
-    try:
-        sheet.update_acell('B11', cash_in_val)
-        sheet.update_acell('B12', bank_in_val)
-        st.success("✅ อัปเดตยอดเงินในมือเรียบร้อย!")
-        st.rerun()
-    except Exception as e:
-        st.error(f"เกิดข้อผิดพลาดในการบันทึก: {e}")
