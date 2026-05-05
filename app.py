@@ -110,10 +110,20 @@ with col3:
 
 st.markdown("---")
 
+# ฟังก์ชันดึงข้อความจากคอลัมน์ C (Index 2)
+def get_text(r, c):
+    try: return str(data[r][c]).strip()
+    except: return ""
+
+# ดึงข้อความจากเซลล์ C3, C4, C5
+food_remain_text = get_text(2, 2)  
+pers_remain_text = get_text(3, 2)  
+oth_remain_text  = get_text(4, 2)  
+
 st.subheader(f"📝 บันทึกรายจ่ายใหม่ ({selected_month})")
-food_in = st.number_input(f"ค่ากิน (วันนี้) - เหลือ {budget_food-used_food:,.0f} ฿", min_value=0.0, step=1.0)
-pers_in = st.number_input(f"ใช้ส่วนตัว (วันนี้) - เหลือ {budget_personal-used_personal:,.0f} ฿", min_value=0.0, step=1.0)
-oth_in = st.number_input(f"อื่นๆ - เหลือ {budget_other-used_other:,.0f} ฿", min_value=0.0, step=1.0)
+food_in = st.number_input(f"ค่ากิน - {food_remain_text}", min_value=0.0, step=1.0)
+pers_in = st.number_input(f"ใช้ส่วนตัว - {pers_remain_text}", min_value=0.0, step=1.0)
+oth_in = st.number_input(f"อื่นๆ - {oth_remain_text}", min_value=0.0, step=1.0)
 note = st.text_input("หมายเหตุ")
 
 if st.button("บันทึกลง Google Sheets", use_container_width=True):
