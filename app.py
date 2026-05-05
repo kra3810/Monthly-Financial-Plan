@@ -126,22 +126,35 @@ if st.button("บันทึกลง Google Sheets", use_container_width=True)
 
 st.markdown("---")
 
-# --- 5. ตรวจสอบเงินในมือ (เพิ่มใหม่) ---
+# --- 5. ตรวจสอบเงินในมือ (เพิ่มใหม่แบบแก้ไขได้) ---
 st.subheader("💵 ตรวจสอบเงินในมือ")
-# คำนวณส่วนต่าง (เอาเงินที่ควรมี ลบด้วย เงินที่มีจริง)
-expected_cash = remaining_balance
-diff = actual_total - expected_cash
 
-# แก้เหลือ 2 คอลัมน์ ลบส่วนสำรองออก
+# ทำเป็นคอลัมน์ให้ดูมินิมอล
 col_cash1, col_cash2 = st.columns(2)
 with col_cash1:
-    st.metric("เงินสด", f"{cash_on_hand:,.2f} ฿")
+    cash_in = st.number_input("เงินสดที่มี", value=cash_on_hand, min_value=0.0, step=10.0)
 with col_cash2:
-    st.metric("เงินโอน", f"{bank_transfer:,.2f} ฿")
+    bank_in = st.number_input("เงินโอนที่มี", value=bank_transfer, min_value=0.0, step=10.0)
 
+# คำนวณเงินที่มีจริง และส่วนต่าง
+new_actual_total = cash_in + bank_in
+expected_cash = remaining_balance
+diff = new_actual_total - expected_cash
+
+# โชว์ยอดรวมและส่วนต่าง
 col_tot1, col_tot2 = st.columns(2)
 with col_tot1:
-    st.metric("เงินที่มีจริงตอนนี้", f"{actual_total:,.2f} ฿")
+    st.metric("เงินที่มีจริงตอนนี้", f"{new_actual_total:,.2f} ฿")
 with col_tot2:
-    # โชว์ส่วนต่าง พร้อมสีเขียว(+) แดง(-) 
-    st.metric("ส่วนต่าง (ควรมี - มีจริง)", f"{diff:,.2f} ฿", delta=f"{diff:,.2f} ฿")
+    st.metric("ส่วนต่าง", f"{diff:,.2f} ฿", delta=f"{diff:,.2f} ฿")
+
+# ปุ่มบันทึกเฉพาะส่วนเงินในมือ
+if st.button("อัปเดตเงินในมือ", use_container_width=True):
+    try:
+        # อัปเดตลงช่อง B11 (เงินสด) และ B12 (เงินโอน)
+        sheet.update_acell('B11', cash_in)
+        sheet.update_acell('B12', bank_in)
+        st.success("อัปเดตยอดเงินในมือเรียบร้อย!")
+        st.rerun()
+    except Exception as e:
+        st.error(f"เกิดข้อผิดพลาดในการบันทึก: {e}")
