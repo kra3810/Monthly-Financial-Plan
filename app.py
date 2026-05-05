@@ -18,7 +18,6 @@ try:
     spreadsheet = client.open("แผนการเงินรายเดือน")
     month_list = [ws.title for ws in spreadsheet.worksheets()]
     
-    # จำหน้าผ่าน URL
     query_params = st.query_params
     thai_months = {1:"ม.ค.", 2:"ก.พ.", 3:"มี.ค.", 4:"เม.ย.", 5:"พ.ค.", 6:"มิ.ย.", 7:"ก.ค.", 8:"ส.ค.", 9:"ก.ย.", 10:"ต.ค.", 11:"พ.ย.", 12:"ธ.ค."}
     now = datetime.datetime.now()
@@ -34,43 +33,53 @@ except Exception as e:
     st.error(f"Error: {e}")
     st.stop()
 
-# --- 3. ดึงข้อมูลตัวเลข (ดึงตรงๆ ถ้าไม่มีค่าให้เป็น 0) ---
+# --- 2. ดึงข้อมูลตัวเลข (รวม Cash Check) ---
 try:
     sheet = spreadsheet.worksheet(selected_month)
     data = sheet.get_all_values()
 
-    # ฟังก์ชันสั้นๆ สำหรับดึงค่า: ถ้าว่าง/Error ให้เป็น 0
     def val(r, c):
         try:
             v = data[r][c].replace(',', '').strip()
             return float(v) if v else 0.0
         except: return 0.0
 
-    # ดึงค่าตามพิกัดที่คุณทำไว้ในไฟล์ แผนการเงินรายเดือน(1).xlsx
-    used_food     = val(2, 1)   # เซลล์ B3
-    used_personal = val(3, 1)   # เซลล์ B4
-    used_other    = val(4, 1)   # เซลล์ B5
+    # งบที่ใช้ไป
+    used_food     = val(2, 1)   # B3
+    used_personal = val(3, 1)   # B4
+    used_other    = val(4, 1)   # B5
     
-    central_remain = val(18, 1) # เซลล์ B19
+    # เงินโอน เงินสด ส่วนต่าง (Cash Check)
+    cash_in_hand = val(10, 1)   # B11 (เงินสดที่มี)
+    money_transferred = val(11, 1) # B12 (เงินโอนที่มี)
+    separated_saving = val(12, 1)  # B13 (เงินเก็บสำรองที่แยกออกมา)
+    total_cash_bank = val(13, 1)   # B14 (รวมงบที่มีจริงตอนนี้)
     
-    budget_food     = val(22, 1) # เซลล์ B23
-    budget_personal = val(23, 1) # เซลล์ B24
-    budget_other    = val(24, 1) # เซลล์ B25
-    emergency_fund  = val(25, 1) # เซลล์ B26
+    # งบประมาณกลางจากที่บ้าน
+    monthly_allowance_val = val(16, 1) # B17
+    accumulated_allowance_val = val(17, 1) # B18
+    central_remain = val(18, 1) # B19
+    
+    # งบรายเดือนตายตัว
+    budget_food     = val(22, 1) # B23
+    budget_personal = val(23, 1) # B24
+    budget_other    = val(24, 1) # B25
+    emergency_fund  = val(25, 1) # B26
 
 except Exception:
-    # กรณีสลับเดือนแล้วพัง (เช่น ยังไม่มีการสร้างตารางในเดือนนั้น) ให้ล้างเป็น 0 ทั้งหมด
     used_food = used_personal = used_other = 0.0
-    budget_food = budget_personal = budget_other = 0.0
-    central_remain = emergency_fund = 0.0
+    cash_in_hand = money_transferred = separated_saving = total_cash_bank = 0.0
+    monthly_allowance_val = accumulated_allowance_val = central_remain = 0.0
+    budget_food = budget_personal = budget_other = emergency_fund = 0.0
     
-# --- 2. แถบข้าง (Sidebar) ที่หายไป ---
+# --- 3. แถบข้าง (Sidebar) ---
 with st.sidebar:
     st.title("⚙️ การตั้งค่าคงที่")
     st.subheader("📥 เงินสนับสนุนจากที่บ้าน")
-    # ดึงค่าจากชีตมาใส่เป็นค่าเริ่มต้น (ถ้ามี)
-    monthly_allowance = st.number_input("รับเงินจากที่บ้านเดือนนี้", min_value=0.0, step=100.0, value=8000.0)
-    accumulated_allowance = st.number_input("เงินที่รับมาสะสมแล้ว (จากบ้าน)", min_value=0.0, step=1000.0, value=0.0)
+    
+    # ใช้ค่าที่ดึงมาจาก Sheets (ถ้าดึงไม่ได้จะเป็น 0)
+    monthly_allowance = st.number_input("รับเงินจากที่บ้านเดือนนี้", min_value=0.0, step=100.0, value=monthly_allowance_val)
+    accumulated_allowance = st.number_input("เงินที่รับมาสะสมแล้ว (จากบ้าน)", min_value=0.0, step=1000.0, value=accumulated_allowance_val)
     
     with st.expander("รายการตายตัวและเงินเก็บ (Fixed & Saving)"):
         st.write(f"- เงินเก็บสำรองฉุกเฉิน: {emergency_fund:,.0f} ฿")
@@ -97,6 +106,17 @@ with col2:
 with col3:
     st.metric(label="งบกลางคงเหลือ", value=f"{central_remain:,.0f} ฿")
 
+# ส่วนที่เพิ่มเข้ามา: ตรวจสอบเงินในมือ (Cash Check)
+st.markdown("---")
+st.subheader("💵 ตรวจสอบเงินในมือ (Cash Check)")
+cc1, cc2, cc3 = st.columns(3)
+with cc1:
+    st.metric(label="เงินสดที่มี", value=f"{cash_in_hand:,.2f} ฿")
+with cc2:
+    st.metric(label="เงินโอนที่มี", value=f"{money_transferred:,.2f} ฿")
+with cc3:
+    st.metric(label="รวมเงินจริงที่มี", value=f"{total_cash_bank:,.2f} ฿")
+
 st.markdown("---")
 
 st.subheader(f"📝 บันทึกรายจ่ายใหม่ ({selected_month})")
@@ -111,15 +131,4 @@ if st.button("บันทึกลง Google Sheets", use_container_width=True)
         sheet.append_row(new_row)
         st.rerun()
     except Exception as e:
-        # ถ้าดึงข้อมูลพลาด หรือหาไม่เจอ ให้เซตทุกอย่างเป็น 0 ให้หมด
-        used_food = 0.0
-        used_personal = 0.0
-        used_other = 0.0
-        
-        # ส่วนงบประมาณตั้งต้น จะใส่เป็น 0 หรือค่าที่คุณตั้งไว้ก็ได้
-        budget_food = 2000.0 
-        budget_personal = 900.0
-        budget_other = 300.0
-        
-        # พิมพ์ error ออกมาดูเบาๆ ว่าทำไมมันถึงหลุดมาที่นี่
-        print(f"Error logic: {e}")
+        st.error(f"เกิดข้อผิดพลาดในการบันทึก: {e}")
