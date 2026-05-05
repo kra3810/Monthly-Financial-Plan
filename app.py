@@ -3,6 +3,7 @@ import pandas as pd
 import gspread
 from google.oauth2.service_account import Credentials
 import datetime
+import re
 
 st.set_page_config(page_title="Kla Finance v1.0", layout="centered")
 
@@ -80,21 +81,39 @@ except Exception as e:
     accumulated_allowance = 0.0
     cash_on_hand = bank_transfer = sep_emergency = actual_total = 0.0
 
+# --- ฟังก์ชันกรองความปลอดภัยก่อนคำนวณ ---
+def safe_eval(expr_str):
+    # ลบช่องว่างและคอมม่าออก
+    clean_str = str(expr_str).replace(',', '').replace(' ', '')
+    
+    # ถ้าช่องว่างเปล่า ให้คืนค่า 0.0
+    if not clean_str:
+        return 0.0
+        
+    # ด่านตรวจความปลอดภัย: อนุญาตเฉพาะตัวเลข 0-9, จุดทศนิยม และเครื่องหมาย + - * / ( )
+    if not re.fullmatch(r'[0-9+\-*/().]+', clean_str):
+        raise ValueError("ตรวจพบตัวอักษรหรือสัญลักษณ์ที่ไม่อนุญาต")
+        
+    # ถ้าสมการพิมพ์ผิดหลักคณิตศาสตร์ (เช่น 100++50, 1/0) Python จะโยน Error ให้ except จับเอง
+    return float(eval(clean_str))
+
 def auto_calc(key):
     try:
-        val = float(eval(str(st.session_state[key]).replace(',', '')))
+        val = safe_eval(st.session_state[key])
         st.session_state[key] = f"{val:g}"
     except Exception as e:
-        print(f"auto_calc error ({key}): {e}") # Print ลง Console เวลาสมการพัง
+        print(f"auto_calc error ({key}): {e}") 
 
 def auto_update(key, cell):
     try:
-        val = float(eval(str(st.session_state[key]).replace(',', '')))
+        # ใช้ safe_eval ประมวลผลแทน เพื่อป้องกัน Code Injection และตัวอักษรขยะ
+        val = safe_eval(st.session_state[key])
+        
         sheet.update_acell(cell, val)
         st.session_state[key] = str(val)
         st.toast(f"✅ อัปเดตข้อมูลช่อง {cell} เรียบร้อย!")
     except Exception as e:
-        st.toast(f"❌ รูปแบบสมการไม่ถูกต้อง (ห้ามมีตัวอักษร)")
+        st.toast(f"❌ รูปแบบสมการไม่ถูกต้อง หรือมีตัวอักษรปนอยู่")
         print(f"auto_update error ({key}): {e}")
 
 # --- 2. แถบข้าง (Sidebar) ---
