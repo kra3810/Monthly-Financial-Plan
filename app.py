@@ -108,14 +108,20 @@ with st.sidebar:
         st.write(f"- อื่นๆ: {budget_other:,.0f} ฿")
         
 # --- 4. Dashboard & Input ---
-total_budget = budget_food + budget_personal + budget_other # งบที่ตั้งไว้ (3,500)
-total_used = used_food + used_personal + used_other # ใช้ไปแล้ว (3,237)
+total_budget = budget_food + budget_personal + budget_other # งบที่ตั้งไว้
+total_used = used_food + used_personal + used_other # ใช้ไปแล้ว
 
 # โควต้าเงินเหลือใช้จ่ายแบบรายวัน (ไม่รวมเงินฉุกเฉิน)
-daily_remaining = total_budget - total_used # จะได้ 263 บาท
+daily_remaining = total_budget - total_used 
 
 # เปอร์เซ็นต์การใช้ (ตามโควต้างบรายวัน)
 percent_used = min((total_used / total_budget) * 100, 100.0) if total_budget > 0 else 0
+
+# สร้างตัวแปรดึงข้อความสถานะจากช่อง C13 ป้องกัน Error หาตัวแปรไม่เจอ
+try:
+    emergency_status = str(data[12][2]).strip()
+except Exception:
+    emergency_status = ""
 
 st.title("💰 สรุปสถานะเงิน")
 st.markdown(f"**การใช้งบรายวันเดือนนี้ ({percent_used:.0f}%)**")
@@ -123,10 +129,10 @@ st.progress(percent_used / 100.0)
 
 col1, col2, col3 = st.columns(3)
 with col1:
-    # เปลี่ยนมาโชว์โควต้าที่เหลือจริง เพื่อไม่ให้หลอกตาตัวเอง
+    # โชว์โควต้าที่เหลือจริง (ไม่แตะสำรอง)
     st.metric(label="โควต้าเหลือใช้ (ก่อนกินเงินสำรอง)", value=f"{daily_remaining:,.0f} ฿")
 with col2:
-    # โชว์เงินที่ดึงมาเก็บสำรองไว้จริงๆ (ช่อง B13) พร้อมแจ้งเตือนสีจาก C13
+    # โชว์สำรองที่แยกไว้ พร้อมแจ้งเตือนสีจาก C13
     st.metric(label="สำรองที่แยกไว้", value=f"{sep_emergency:,.0f} ฿", delta=emergency_status, delta_color="off")
 with col3:
     st.metric(label="งบกลางคงเหลือ", value=f"{central_remain:,.0f} ฿")
