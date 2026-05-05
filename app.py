@@ -64,7 +64,7 @@ try:
     budget_food     = val(22, 1) # เซลล์ B23
     budget_personal = val(23, 1) # เซลล์ B24
     budget_other    = val(24, 1) # เซลล์ B25
-    emergency_fund  = val(25, 1) # เซลล์ B26
+    emergency_fund  = val(12, 1) # เซลล์ B13
 
 except Exception:
     # กรณีสลับเดือนแล้วพัง (เช่น ยังไม่มีการสร้างตารางในเดือนนั้น) ให้ล้างเป็น 0 ทั้งหมด
