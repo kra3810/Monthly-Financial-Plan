@@ -108,15 +108,18 @@ with st.sidebar:
         st.write(f"- อื่นๆ: {budget_other:,.0f} ฿")
         
 # --- 4. Dashboard & Input ---
-total_budget = budget_food + budget_personal + budget_other
 total_used = used_food + used_personal + used_other
 
 # ดึงค่าเงินเหลือใช้จ่ายโดยตรงจากเซลล์ F3 ตามไฟล์
 remaining_balance = val(2, 5) 
 
-percent_used = min((total_used / total_budget) * 100, 100.0) if total_budget > 0 else 0
+# คำนวณฐานงบประมาณที่แท้จริง (ใช้ไปแล้ว + ที่ยังเหลืออยู่)
+actual_total_budget = total_used + remaining_balance
 
-# สร้างตัวแปรดึงข้อความสถานะจากช่อง C13 ป้องกัน Error หาตัวแปรไม่เจอ
+# คำนวณเปอร์เซ็นต์ใหม่ อิงจากฐานเงินที่มีจริง
+percent_used = min((total_used / actual_total_budget) * 100, 100.0) if actual_total_budget > 0 else 0
+
+# สร้างตัวแปรดึงข้อความสถานะจากช่อง C13
 try:
     emergency_status = str(data[12][2]).strip()
 except Exception:
