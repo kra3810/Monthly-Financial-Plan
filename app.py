@@ -6,7 +6,6 @@ import datetime
 
 st.set_page_config(page_title="Kla Finance v1.0", layout="centered")
 
-# --- การตั้งค่า Google Sheets API ---
 def get_gspread_client():
     credentials_dict = st.secrets["gcp_service_account"]
     scopes = [
@@ -14,18 +13,24 @@ def get_gspread_client():
         "https://www.googleapis.com/auth/drive"
     ]
     creds = Credentials.from_service_account_info(credentials_dict, scopes=scopes)
-    client = gspread.authorize(creds)
-    return client
+    return gspread.authorize(creds)
 
-# --- ตัวเลือกเดือน ---
-month_list = ["พ.ค. 69", "มิ.ย. 69", "ก.ค. 69"] 
+# ==========================================
+# 1. ระบบดึงรายชื่อเดือน (แท็บ) อัตโนมัติ
+# ==========================================
+try:
+    client = get_gspread_client()
+    spreadsheet = client.open("แผนการเงินรายเดือน")
+    worksheets = spreadsheet.worksheets()
+    month_list = [ws.title for ws in worksheets]
+except Exception as e:
+    st.error(f"เชื่อมต่อ Sheets ไม่สำเร็จ: {e}")
+    month_list = ["เกิดข้อผิดพลาด"]
+
 selected_month = st.selectbox("📅 เลือกเดือนที่ต้องการบันทึก", month_list)
 
-# --- ส่วนของการซุก "ค่าใช้จ่ายตายตัว" ไว้ที่แถบข้าง ---
 with st.sidebar:
     st.title("⚙️ การตั้งค่าคงที่")
-    
-    st.subheader("📥 เงินสนับสนุนจากที่บ้าน")
     monthly_allowance = st.number_input("รับเงินจากที่บ้านเดือนนี้", min_value=0.0, step=100.0, value=8000.0)
     accumulated_allowance = st.number_input("เงินที่รับมาสะสมแล้ว (จากบ้าน)", min_value=0.0, step=1000.0, value=0.0)
     
@@ -36,41 +41,34 @@ with st.sidebar:
         st.write("- งบส่วนตัว: 900 ฿")
         st.write("- อื่นๆ: 300 ฿")
 
-# ตัวแปรจำลองงบกลาง (สามารถแก้ให้ดึงจาก Sheet ได้ในอนาคตถ้ามีตารางเก็บ)
 central_budget_total = 138000 
 central_budget_remaining = central_budget_total - accumulated_allowance 
 emergency_fund = 1000 
 budget = {"food": 2000, "personal": 900, "other": 300}
 
 # ==========================================
-# 🚀 ระบบดึงข้อมูลจาก Google Sheets ของจริง
+# 2. อ่านข้อมูล + เปิดโหมด Debug แอบดูตาราง
 # ==========================================
 used_food, used_personal, used_other = 0.0, 0.0, 0.0
 
-try:
-    client = get_gspread_client()
-    # ดึงชีตตามเดือนที่เลือก
-    sheet = client.open("แผนการเงินรายเดือน").worksheet(selected_month)
+if selected_month != "เกิดข้อผิดพลาด":
+    sheet = spreadsheet.worksheet(selected_month)
     records = sheet.get_all_values()
     
-    # ถ้ามีข้อมูลมากกว่า 1 แถว (แปลว่ามีข้อมูลที่กรอกไปแล้ว ไม่ใช่มีแค่หัวตาราง)
-    if len(records) > 1:
-        # เอาข้อมูลตั้งแต่แถวที่ 2 มาทำ DataFrame
-        df = pd.DataFrame(records[1:]) 
+    if len(records) > 0:
+        df = pd.DataFrame(records) 
         
-        # สมมติโครงสร้างตาราง: คอลัมน์ 1=กิน, 2=ส่วนตัว, 3=อื่นๆ (Index เริ่มที่ 0)
-        # แปลงเป็นตัวเลข ถ้าช่องว่างให้เป็น 0 แล้วจับบวกกัน
-        used_food = pd.to_numeric(df[1], errors='coerce').fillna(0).sum()
-        used_personal = pd.to_numeric(df[2], errors='coerce').fillna(0).sum()
-        used_other = pd.to_numeric(df[3], errors='coerce').fillna(0).sum()
+        # 🔴 โชว์ตารางข้อมูลดิบบนเว็บ
+        st.warning("👇 ตารางข้อมูลดิบที่บอทมองเห็น (เอาไว้หาตำแหน่ง Index)")
+        st.dataframe(df)
+        
+        # โค้ดดึงข้อมูลชั่วคราว (ยังไม่ได้แก้ตำแหน่ง Index)
+        if len(df) > 1:
+            used_food = pd.to_numeric(df[1][1:], errors='coerce').fillna(0).sum()
+            used_personal = pd.to_numeric(df[2][1:], errors='coerce').fillna(0).sum()
+            used_other = pd.to_numeric(df[3][1:], errors='coerce').fillna(0).sum()
 
-except Exception as e:
-    st.warning(f"ยังไม่มีข้อมูลดึงจากชีต {selected_month} หรือเกิดข้อผิดพลาด: {e}")
-
-# อัปเดตตัวแปร used ด้วยข้อมูลจริงที่ดึงมา
 used = {"food": used_food, "personal": used_personal, "other": used_other}
-# ==========================================
-
 total_budget = sum(budget.values())
 total_used = sum(used.values())
 remaining_balance = total_budget - total_used
@@ -84,9 +82,7 @@ if monthly_allowance > 0:
 else:
     time_left_str = "ยังไม่ได้ระบุยอดรับรายเดือน"
 
-# --- 1. ส่วนบน: Dashboard สั้นๆ (Read-Only) ---
 st.title("💰 สรุปสถานะเงิน")
-
 st.markdown(f"**การใช้งบรายวันเดือนนี้ ({percent_used:.0f}%)**")
 st.progress(percent_used / 100.0)
 
@@ -107,7 +103,6 @@ def get_label(name, b, u):
     else:
         return f"{name} (⚠️ เกิน {-diff:,.0f} ฿)"
 
-# --- 2. ส่วนกลาง: ช่องกรอกข้อมูล (The Input Zone) ---
 st.subheader(f"📝 บันทึกรายจ่ายใหม่ ({selected_month})")
 with st.container():
     food = st.number_input(get_label("ค่ากิน (วันนี้)", budget['food'], used['food']), min_value=0.0, step=1.0, value=0.0)
@@ -117,29 +112,19 @@ with st.container():
 
     if st.button("บันทึกลง Google Sheets", use_container_width=True):
         try:
-            client = get_gspread_client()
-            sheet = client.open("แผนการเงินรายเดือน").worksheet(selected_month)
-            
             today_str = datetime.datetime.now().strftime("%Y-%m-%d")
             new_row = [today_str, food, personal, other, note]
-            
             sheet.append_row(new_row)
-            # ล้างแคชเพื่อให้แอปรีเฟรชข้อมูลใหม่ทันทีหลังบันทึก
             st.rerun() 
-            
         except Exception as e:
             st.error(f"เกิดข้อผิดพลาดในการบันทึก: {e}")
 
 st.markdown("---")
-
-# --- 3. ส่วนล่าง: ตรวจสอบเงินจริง (Cash Check) ---
 with st.expander("🔍 ตรวจสอบส่วนต่างเงินจริง (Cash Check)"):
     actual_cash = st.number_input("เงินสดในมือ", min_value=0.0, step=1.0, value=0.0)
     actual_bank = st.number_input("เงินในบัญชี", min_value=0.0, step=1.0, value=0.0)
-    
     theoretical_balance = remaining_balance + emergency_fund 
     diff = (actual_cash + actual_bank) - theoretical_balance
-    
     if diff == 0:
         st.write("✅ ยอดตรงเป๊ะ!")
     else:
