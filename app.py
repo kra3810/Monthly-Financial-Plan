@@ -81,22 +81,32 @@ with st.sidebar:
     st.title("⚙️ การตั้งค่าคงที่")
     st.subheader("📥 เงินสนับสนุนจากที่บ้าน")
     
-    # ดึงค่าจากชีตมาใส่เป็นค่าเริ่มต้น
-    m_allow = st.number_input("รับเงินจากที่บ้านเดือนนี้", min_value=0.0, step=100.0, value=monthly_allowance)
-    a_allow = st.number_input("เงินที่รับมาสะสมแล้ว (จากบ้าน)", min_value=0.0, step=1000.0, value=accumulated_allowance)
+    # เปลี่ยนเป็นช่องข้อความเพื่อให้พิมพ์บวกเลขได้
+    m_allow_str = st.text_input("รับเงินจากบ้านเดือนนี้ (พิมพ์บวกเลขได้ เช่น 4000+3000)", value=str(monthly_allowance))
+    a_allow_str = st.text_input("เงินสะสมแล้ว (พิมพ์บวกเลขได้)", value=str(accumulated_allowance))
     
-    # เพิ่มปุ่มสำหรับอัปเดตกลับไปที่ Google Sheets
     if st.button("อัปเดตเงินสนับสนุน", use_container_width=True):
         try:
-            # อัปเดตช่อง F2 (เงินสนับสนุนเดือนนี้)
-            sheet.update_acell('F2', m_allow)
-            # อัปเดตช่อง B18 (เงินสะสม)
-            sheet.update_acell('B18', a_allow)
+            # คำนวณสมการที่พิมพ์เข้ามา
+            m_allow_val = float(eval(m_allow_str.replace(',', '')))
+            a_allow_val = float(eval(a_allow_str.replace(',', '')))
+            
+            sheet.update_acell('F2', m_allow_val)
+            sheet.update_acell('B18', a_allow_val)
             
             st.success("✅ อัปเดตลง Sheets แล้ว!")
-            st.rerun() # รีเฟรชหน้าเว็บเพื่อให้ค่าใหม่แสดงผลทันที
+            st.rerun() 
         except Exception as e:
-            st.error(f"เกิดข้อผิดพลาด: {e}")
+            st.error(f"กรุณาพิมพ์ตัวเลขหรือสมการให้ถูกต้อง (ห้ามมีตัวอักษร): {e}")
+    
+    st.markdown("---")
+    
+    with st.expander("รายการตายตัวและเงินเก็บ (Fixed & Saving)"):
+        st.write(f"- เงินเก็บสำรองฉุกเฉิน: {budget_emergency:,.0f} ฿")
+        st.write("- ค่าหอพัก: 4,500 ฿")
+        st.write(f"- งบกิน: {budget_food:,.0f} ฿")
+        st.write(f"- งบส่วนตัว: {budget_personal:,.0f} ฿")
+        st.write(f"- อื่นๆ: {budget_other:,.0f} ฿")
     
     st.markdown("---")
     
@@ -188,31 +198,34 @@ st.markdown("---")
 # --- 5. ตรวจสอบเงินในมือ (เพิ่มใหม่แบบแก้ไขได้) ---
 st.subheader("💵 ตรวจสอบเงินในมือ")
 
-# ทำเป็นคอลัมน์ให้ดูมินิมอล
 col_cash1, col_cash2 = st.columns(2)
 with col_cash1:
-    cash_in = st.number_input("เงินสดที่มี", value=cash_on_hand, min_value=0.0, step=10.0)
+    cash_in_str = st.text_input("เงินสด (พิมพ์บวกเลขได้ เช่น 100+50)", value=str(cash_on_hand))
 with col_cash2:
-    bank_in = st.number_input("เงินโอนที่มี", value=bank_transfer, min_value=0.0, step=10.0)
+    bank_in_str = st.text_input("เงินโอน (พิมพ์บวกเลขได้)", value=str(bank_transfer))
 
-# คำนวณเงินที่มีจริง และส่วนต่าง
-new_actual_total = cash_in + bank_in
+# คำนวณค่าระหว่างที่กำลังพิมพ์ ป้องกัน Error หน้าเว็บพัง
+try:
+    cash_in_val = float(eval(cash_in_str.replace(',', '')))
+    bank_in_val = float(eval(bank_in_str.replace(',', '')))
+except:
+    cash_in_val = cash_on_hand
+    bank_in_val = bank_transfer
+
+new_actual_total = cash_in_val + bank_in_val
 expected_cash = remaining_balance
 diff = new_actual_total - expected_cash
 
-# โชว์ยอดรวมและส่วนต่าง
 col_tot1, col_tot2 = st.columns(2)
 with col_tot1:
     st.metric("เงินที่มีจริงตอนนี้", f"{new_actual_total:,.2f} ฿")
 with col_tot2:
     st.metric("ส่วนต่าง", f"{diff:,.2f} ฿", delta=f"{diff:,.2f} ฿")
 
-# ปุ่มบันทึกเฉพาะส่วนเงินในมือ
 if st.button("อัปเดตเงินในมือ", use_container_width=True):
     try:
-        # อัปเดตลงช่อง B11 (เงินสด) และ B12 (เงินโอน)
-        sheet.update_acell('B11', cash_in)
-        sheet.update_acell('B12', bank_in)
+        sheet.update_acell('B11', cash_in_val)
+        sheet.update_acell('B12', bank_in_val)
         st.success("อัปเดตยอดเงินในมือเรียบร้อย!")
         st.rerun()
     except Exception as e:
