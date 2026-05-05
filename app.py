@@ -120,10 +120,17 @@ food_remain_text = get_text(2, 2)
 pers_remain_text = get_text(3, 2)  
 oth_remain_text  = get_text(4, 2)  
 
+# คำนวณส่วนต่างเพื่อกำหนดสี (เขียว = เหลือ, แดง = เกิน)
+food_color = "green" if (budget_food - used_food) >= 0 else "red"
+pers_color = "green" if (budget_personal - used_personal) >= 0 else "red"
+oth_color  = "green" if (budget_other - used_other) >= 0 else "red"
+
 st.subheader(f"📝 บันทึกรายจ่ายใหม่ ({selected_month})")
-food_in = st.number_input(f"ค่ากิน - {food_remain_text}", min_value=0.0, step=1.0)
-pers_in = st.number_input(f"ใช้ส่วนตัว - {pers_remain_text}", min_value=0.0, step=1.0)
-oth_in = st.number_input(f"อื่นๆ - {oth_remain_text}", min_value=0.0, step=1.0)
+
+# เปลี่ยนสีข้อความด้วยรูปแบบ :color[text]
+food_in = st.number_input(f"ค่ากิน - :{food_color}[{food_remain_text}]", min_value=0.0, step=1.0)
+pers_in = st.number_input(f"ใช้ส่วนตัว - :{pers_color}[{pers_remain_text}]", min_value=0.0, step=1.0)
+oth_in  = st.number_input(f"อื่นๆ - :{oth_color}[{oth_remain_text}]", min_value=0.0, step=1.0)
 note = st.text_input("หมายเหตุ")
 
 if st.button("บันทึกลง Google Sheets", use_container_width=True):
