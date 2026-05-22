@@ -261,7 +261,7 @@ fig_circle = go.Figure(data=[go.Pie(
 # ใส่ตัวเลขเปอร์เซ็นต์ไว้ตรงกลางวงแหวน และปรับขนาดรวมให้เล็กลง
 fig_circle.update_layout(
     showlegend=False,
-    annotations=[dict(text=f"{percent_used:.0f}%", x=0.5, y=0.5, font_size=35, showarrow=False)],
+    annotations=[dict(text=f"{percent_used:.0f}%", x=0.5, y=0.5, font_size=50, showarrow=False)],
     height=375,       # ปรับลดความสูงเพื่อให้วงกลมโดยรวมเล็กลง
     margin=dict(l=20, r=20, t=20, b=20)
 )
