@@ -142,7 +142,7 @@ with st.sidebar:
 # --- 4. Dashboard & Input ---
 total_used = used_food + used_personal + used_other
 remaining_balance = val(2, 5) 
-remaining_time = val(18,2)
+remaining_time = str(data[18][2]).strip()
 
 # ในเมื่อ F3 คือยอดที่เหลือให้ใช้จริงๆ แบบไม่รวมเงินฉุกเฉินอยู่แล้ว
 # ฐานงบ 100% จึงเท่ากับ (ยอดที่ใช้ไปแล้ว + ยอดที่เหลือให้ใช้) ได้เลย ไม่ต้องลบซ้ำ
