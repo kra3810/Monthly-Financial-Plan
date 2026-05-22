@@ -123,13 +123,15 @@ with st.sidebar:
     
     m_key = f"m_allow_{selected_month}"
     a_key = f"a_allow_{selected_month}"
+    e_key = f"a_allow_{selected_month}"
     
     if m_key not in st.session_state: st.session_state[m_key] = str(monthly_allowance)
     if a_key not in st.session_state: st.session_state[a_key] = str(accumulated_allowance)
+    if e_ket not in st.session_state: st.session_state[e_key] = str(emergency_fund)
         
     st.text_input("รับเงินจากบ้าน (พิมพ์สมการแล้วกด Enter)", key=m_key, on_change=auto_update, args=(m_key, 'F2'))
     st.text_input("เงินสะสม (พิมพ์สมการแล้วกด Enter)", key=a_key, on_change=auto_update, args=(a_key, 'B18'))
-    st.text_input("เงินสำรองฉุกเฉิน (พิมพ์สมการแล้วกด Enter)", key=a_key, on_change=auto_update, args=(a_key, 'B13'))
+    st.text_input("เงินสำรองฉุกเฉิน (พิมพ์สมการแล้วกด Enter)", key=e_key, on_change=auto_update, args=(a_key, 'B13'))
     
     st.markdown("---")
     
