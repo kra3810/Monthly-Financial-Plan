@@ -253,7 +253,7 @@ fig_circle = go.Figure(data=[go.Pie(
     values=[percent_used, remainder],
     labels=["ใช้ไปแล้ว", "งบที่เหลือ"],
     marker=dict(colors=[ring_color, "#EFEFEF"]), 
-    hole=0.95,         # ปรับจาก 0.8 เป็น 0.9 เพื่อให้ "เส้นบางลง"
+    hole=0.9,         # ปรับจาก 0.8 เป็น 0.9 เพื่อให้ "เส้นบางลง"
     textinfo='none',  
     hoverinfo='label+percent'
 )])
@@ -261,7 +261,7 @@ fig_circle = go.Figure(data=[go.Pie(
 # ใส่ตัวเลขเปอร์เซ็นต์ไว้ตรงกลางวงแหวน และปรับขนาดรวมให้เล็กลง
 fig_circle.update_layout(
     showlegend=False,
-    annotations=[dict(text=f"{percent_used:.0f}%", x=0.5, y=0.5, font_size=50, showarrow=False)],
+    annotations=[dict(text=f"{percent_used:.0f}%", x=0.5, y=0.5, font_size=60, showarrow=False)],
     height=375,       # ปรับลดความสูงเพื่อให้วงกลมโดยรวมเล็กลง
     margin=dict(l=20, r=20, t=20, b=20)
 )
