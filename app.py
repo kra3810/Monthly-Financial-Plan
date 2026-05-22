@@ -241,35 +241,32 @@ st.markdown("**🎯 สถานะการใช้งบประมาณเ
 # คำนวณส่วนที่เหลือ (ถ้าใช้เกิน 100% ให้ส่วนที่เหลือเป็น 0)
 remainder = 100 - percent_used if percent_used < 100 else 0
 
-# กำหนดสีแถบตามความวิกฤต
-if percent_used >= 90:
-    ring_color = "#FF6B6B"  # โซนอันตราย (สีแดง)
-elif percent_used >= 80:
-    ring_color = "#FFD166"  # โซนเฝ้าระวัง (สีเหลือง)
+# กำหนดสีแถบตาม "เปอร์เซ็นต์ที่เหลือ"
+if remainder <= 10:
+    ring_color = "#FF6B6B"  # โซนอันตราย (สีแดง) เมื่อเหลืองบน้อยกว่าหรือเท่ากับ 10%
+elif remainder <= 30:
+    ring_color = "#FFD166"  # โซนเฝ้าระวัง (สีเหลือง) เมื่อเหลืองบน้อยกว่าหรือเท่ากับ 30%
 else:
-    ring_color = "#4ECDC4"  # โซนปลอดภัย (สีเขียว)
+    ring_color = "#4ECDC4"  # โซนปลอดภัย (สีเขียว) เมื่อยังเหลือเงินเยอะ
 
 fig_circle = go.Figure(data=[go.Pie(
     values=[percent_used, remainder],
     labels=["ใช้ไปแล้ว", "งบที่เหลือ"],
-    marker=dict(colors=[ring_color, "#EFEFEF"]), # สีแถบสถานะ และ สีพื้นหลังวงแหวน
-    hole=0.8,         # ความหนาของวงแหวน (ยิ่งใกล้ 1 ยิ่งบาง)
-    textinfo='none',  # ซ่อนตัวหนังสือรอบๆ
+    marker=dict(colors=[ring_color, "#EFEFEF"]), 
+    hole=0.9,         # ปรับจาก 0.8 เป็น 0.9 เพื่อให้ "เส้นบางลง"
+    textinfo='none',  
     hoverinfo='label+percent'
 )])
 
-# ใส่ตัวเลขเปอร์เซ็นต์ไว้ตรงกลางวงแหวน
+# ใส่ตัวเลขเปอร์เซ็นต์ไว้ตรงกลางวงแหวน และปรับขนาดรวมให้เล็กลง
 fig_circle.update_layout(
     showlegend=False,
-    annotations=[dict(text=f"{percent_used:.0f}%", x=0.5, y=0.5, font_size=40, showarrow=False)],
-    height=250,
-    margin=dict(l=20, r=20, t=30, b=20)
+    annotations=[dict(text=f"{percent_used:.0f}%", x=0.5, y=0.5, font_size=35, showarrow=False)],
+    height=200,       # ปรับลดความสูงเพื่อให้วงกลมโดยรวมเล็กลง
+    margin=dict(l=20, r=20, t=20, b=20)
 )
 
 st.plotly_chart(fig_circle, use_container_width=True)
-
-
-
 
 
 col1, col2, col3 = st.columns(3)
