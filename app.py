@@ -262,7 +262,7 @@ fig_circle = go.Figure(data=[go.Pie(
 fig_circle.update_layout(
     showlegend=False,
     annotations=[dict(text=f"{percent_used:.0f}%", x=0.5, y=0.5, font_size=35, showarrow=False)],
-    height=500,       # ปรับลดความสูงเพื่อให้วงกลมโดยรวมเล็กลง
+    height=375,       # ปรับลดความสูงเพื่อให้วงกลมโดยรวมเล็กลง
     margin=dict(l=20, r=20, t=20, b=20)
 )
 
