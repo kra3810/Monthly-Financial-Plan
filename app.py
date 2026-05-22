@@ -5,6 +5,8 @@ from google.oauth2.service_account import Credentials
 import datetime
 import re
 import plotly.express as px
+import plotly.graph_objects as go
+
 
 st.set_page_config(page_title="Kla Finance v1.0", layout="centered")
 
@@ -233,9 +235,36 @@ except Exception as e:
     print(f"Warning: ดึงสถานะฉุกเฉินไม่ได้ -> {e}")
     emergency_status = ""
 
-st.title("💰 สรุปสถานะเงิน")
-st.markdown(f"**การใช้งบรายวันเดือนนี้ ({percent_used:.0f}%)**")
-st.progress(percent_used / 100.0)
+        # สร้างหน้าปัดวงกลม (Gauge) บอกเปอร์เซ็นต์การใช้เงิน
+        st.markdown("**🎯 สถานะการใช้งบประมาณเดือนนี้**")
+        
+        fig_gauge = go.Figure(go.Indicator(
+            mode = "gauge+number",
+            value = percent_used, # ดึงตัวเลขเปอร์เซ็นต์ที่คุณคำนวณไว้มาใช้
+            number = {'suffix': "%", 'font': {'size': 40}},
+            domain = {'x': [0, 1], 'y': [0, 1]},
+            gauge = {
+                'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "darkblue"},
+                'bar': {'color': "#4ECDC4"}, # สีของแถบที่วิ่งไปตามยอดใช้จริง
+                'bgcolor': "white",
+                'borderwidth': 2,
+                'bordercolor': "gray",
+                'steps': [
+                    {'range': [0, 50], 'color': "#E8F8F5"},    # โซนปลอดภัย (สีเขียวอ่อน)
+                    {'range': [50, 80], 'color': "#FCF3CF"},    # โซนเฝ้าระวัง (สีเหลืองอ่อน)
+                    {'range': [80, 100], 'color': "#FADBD8"}],  # โซนอันตราย (สีแดงอ่อน)
+                'threshold': {
+                    'line': {'color': "red", 'width': 4},
+                    'thickness': 0.75,
+                    'value': 90 # ขีดเส้นแดงเตือนเมื่อใช้เงินทะลุ 90%
+                }
+            }
+        ))
+        
+        # ปรับขนาดและระยะขอบของวงกลมไม่ให้กินพื้นที่เยอะเกินไป
+        fig_gauge.update_layout(height=250, margin=dict(l=20, r=20, t=30, b=20))
+        st.plotly_chart(fig_gauge, use_container_width=True)
+
 
 col1, col2, col3 = st.columns(3)
 with col1:
