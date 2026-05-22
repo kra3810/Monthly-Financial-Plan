@@ -34,27 +34,27 @@ try:
     st.query_params["month"] = selected_month
 
     # =====================================================================
-    # --- [เพิ่มใหม่] ฟีเจอร์สร้างเดือนถัดไป (ตรวจสอบว่าเป็นเดือนล่าสุดถึงจะแสดง) ---
-    if selected_month == month_list[-1]:
-        parts = selected_month.split()
-        if len(parts) == 2:
-            m_str, y_str = parts[0], parts[1]
-            thai_months_rev = {v: k for k, v in thai_months.items()}
+    # --- ฟีเจอร์สร้างเดือนถัดไป ---
+    parts = selected_month.split()
+    if len(parts) == 2:
+        m_str, y_str = parts[0], parts[1]
+        thai_months_rev = {v: k for k, v in thai_months.items()}
+        
+        if m_str in thai_months_rev:
+            m_num = thai_months_rev[m_str]
+            y_num = int(y_str)
             
-            if m_str in thai_months_rev:
-                m_num = thai_months_rev[m_str]
-                y_num = int(y_str)
-                
-                # คำนวณเดือนและปีถัดไป
-                next_m_num = m_num + 1
-                next_y_num = y_num
-                if next_m_num > 12:
-                    next_m_num = 1
-                    next_y_num += 1
-                
-                next_month_name = f"{thai_months[next_m_num]} {next_y_num}"
-                
-                # สร้างปุ่มสำหรับขึ้นเดือนใหม่
+            # คำนวณเดือนและปีถัดไป
+            next_m_num = m_num + 1
+            next_y_num = y_num
+            if next_m_num > 12:
+                next_m_num = 1
+                next_y_num += 1
+            
+            next_month_name = f"{thai_months[next_m_num]} {next_y_num}"
+            
+            # เปลี่ยนเงื่อนไข: แสดงปุ่มเฉพาะเวลาที่ยังไม่มีหน้าของเดือนถัดไปในระบบ
+            if next_month_name not in month_list:
                 if st.button(f"➕ ปิดยอดและขึ้นเดือนใหม่ ({next_month_name})", use_container_width=True):
                     with st.spinner(f"กำลังคัดลอกและสรุปยอดไปที่เดือน {next_month_name} กรุณารอสักครู่..."):
                         try:
@@ -75,19 +75,19 @@ try:
                             # ดึงงบส่วนตัวเดือนล่าสุด (B24) แล้วบวกเงินเหลือในมือ
                             new_personal_budget = get_prev_val(23, 1) + total_carry_cash
                             
-                            # 2. Duplicate ชีต (โครงสร้างและยอดสะสมจะตามมาด้วยอัตโนมัติ)
+                            # 2. Duplicate ชีต
                             spreadsheet.duplicate_sheet(source_sheet_id=prev_sheet.id, new_sheet_name=next_month_name)
                             new_sheet = spreadsheet.worksheet(next_month_name)
                             
-                            # 3. ล้างค่ายอดใช้จ่ายและอัปเดตยอดใหม่ (ใช้ batch_update เพื่อความรวดเร็ว)
+                            # 3. ล้างค่ายอดใช้จ่ายและอัปเดตยอดใหม่
                             updates = [
-                                {'range': 'B3', 'values': [[0]]},   # รีเซ็ตยอดกิน
-                                {'range': 'B4', 'values': [[0]]},   # รีเซ็ตยอดส่วนตัว
-                                {'range': 'B5', 'values': [[0]]},   # รีเซ็ตยอดอื่นๆ
-                                {'range': 'F2', 'values': [[0]]},   # เงินที่รับจากบ้านตั้งต้นเป็น 0
-                                {'range': 'B11', 'values': [[0]]},  # รีเซ็ตเงินสด
-                                {'range': 'B12', 'values': [[0]]},  # รีเซ็ตเงินโอน
-                                {'range': 'B24', 'values': [[new_personal_budget]]} # เพิ่มงบส่วนตัวจากเงินที่เหลือ
+                                {'range': 'B3', 'values': [[0]]},
+                                {'range': 'B4', 'values': [[0]]},
+                                {'range': 'B5', 'values': [[0]]},
+                                {'range': 'F2', 'values': [[0]]},
+                                {'range': 'B11', 'values': [[0]]},
+                                {'range': 'B12', 'values': [[0]]},
+                                {'range': 'B24', 'values': [[new_personal_budget]]}
                             ]
                             new_sheet.batch_update(updates)
                             
@@ -96,7 +96,7 @@ try:
                                 new_sheet.delete_rows(28, len(prev_data))
                             
                             st.success(f"✅ สร้างและยกยอดไปเดือน {next_month_name} สำเร็จ!")
-                            st.query_params["month"] = next_month_name  # บังคับให้โหลดเข้าหน้าเดือนใหม่
+                            st.query_params["month"] = next_month_name
                             st.rerun()
                             
                         except Exception as e:
