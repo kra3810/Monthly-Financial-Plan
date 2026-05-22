@@ -167,7 +167,7 @@ with col1:
 with col2:
     st.metric(label="เงินสำรองที่แยกไว้", value=f"{sep_emergency:,.0f} ฿", delta=emergency_status, delta_color="off")
 with col3:
-    st.metric(label="งบกลางคงเหลือ", value=f"{central_remain:,.0f} ฿", delta=remaining_time, delta_color="off")
+    st.metric(label="งบกลางคงเหลือ", value=f"{central_remain:,.0f} ฿", delta=remaining_time)
 st.markdown("---")
 
 def get_text(r, c):
