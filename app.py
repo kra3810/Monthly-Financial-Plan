@@ -44,7 +44,6 @@ try:
             m_num = thai_months_rev[m_str]
             y_num = int(y_str)
             
-            # คำนวณเดือนและปีถัดไป
             next_m_num = m_num + 1
             next_y_num = y_num
             if next_m_num > 12:
@@ -53,54 +52,55 @@ try:
             
             next_month_name = f"{thai_months[next_m_num]} {next_y_num}"
             
-            # เปลี่ยนเงื่อนไข: แสดงปุ่มเฉพาะเวลาที่ยังไม่มีหน้าของเดือนถัดไปในระบบ
             if next_month_name not in month_list:
                 if st.button(f"➕ ปิดยอดและขึ้นเดือนใหม่ ({next_month_name})", use_container_width=True):
-                    with st.spinner(f"กำลังคัดลอกและสรุปยอดไปที่เดือน {next_month_name} กรุณารอสักครู่..."):
+                    with st.spinner(f"กำลังสรุปยอดและสร้างเดือนใหม่..."):
                         try:
-                            # 1. ดึงข้อมูลจากเดือนล่าสุดมาเพื่อคำนวณ
                             prev_sheet = spreadsheet.worksheet(selected_month)
                             prev_data = prev_sheet.get_all_values()
                             
-                            def get_prev_val(r, c):
-                                try:
-                                    v = prev_data[r][c].replace(',', '').strip()
-                                    return float(v) if v else 0.0
-                                except:
-                                    return 0.0
+                            def get_v(r, c):
+                                try: return float(prev_data[r][c].replace(',', '').strip())
+                                except: return 0.0
+
+                            # 1. รวบรวมข้อมูลสรุปของเดือนที่กำลังจะปิด
+                            acc_val = get_v(17, 1)    # เงินสะสม (B18)
+                            emg_val = get_v(12, 1)    # เงินสำรองฉุกเฉิน (B13)
+                            used_total = get_v(2, 1) + get_v(3, 1) + get_v(4, 1) # ยอดใช้จ่ายรวม
+                            carry_cash = get_v(10, 1) + get_v(11, 1) # เงินเหลือในมือ
+
+                            # 2. บันทึกลงหน้า Summary_Data
+                            try:
+                                summary_sheet = spreadsheet.worksheet("Summary_Data")
+                            except:
+                                # ถ้าเผลอลบหน้า Summary ไป ให้ระบบสร้างใหม่ให้
+                                summary_sheet = spreadsheet.add_worksheet(title="Summary_Data", rows="100", cols="10")
+                                summary_sheet.append_row(["Month", "Accumulated", "Emergency", "Used", "Carry_Cash"])
                             
-                            # ดึงเงินสด (B11) + เงินโอน (B12) มารวมกัน
-                            total_carry_cash = get_prev_val(10, 1) + get_prev_val(11, 1)
-                            
-                            # ดึงงบส่วนตัวเดือนล่าสุด (B24) แล้วบวกเงินเหลือในมือ
-                            new_personal_budget = get_prev_val(23, 1) + total_carry_cash
-                            
-                            # 2. Duplicate ชีต
+                            summary_sheet.append_row([selected_month, acc_val, emg_val, used_total, carry_cash])
+
+                            # 3. ขึ้นเดือนใหม่ (เหมือนเดิม)
+                            new_personal_budget = get_v(23, 1) + carry_cash
                             spreadsheet.duplicate_sheet(source_sheet_id=prev_sheet.id, new_sheet_name=next_month_name)
                             new_sheet = spreadsheet.worksheet(next_month_name)
                             
-                            # 3. ล้างค่ายอดใช้จ่ายและอัปเดตยอดใหม่
                             updates = [
-                                {'range': 'B3', 'values': [[0]]},
-                                {'range': 'B4', 'values': [[0]]},
-                                {'range': 'B5', 'values': [[0]]},
-                                {'range': 'F2', 'values': [[0]]},
-                                {'range': 'B11', 'values': [[0]]},
-                                {'range': 'B12', 'values': [[0]]},
+                                {'range': 'B3', 'values': [[0]]}, {'range': 'B4', 'values': [[0]]},
+                                {'range': 'B5', 'values': [[0]]}, {'range': 'F2', 'values': [[0]]},
+                                {'range': 'B11', 'values': [[0]]}, {'range': 'B12', 'values': [[0]]},
                                 {'range': 'B24', 'values': [[new_personal_budget]]}
                             ]
                             new_sheet.batch_update(updates)
                             
-                            # 4. ลบประวัติการใช้จ่ายทั้งหมด (เริ่มตั้งแต่แถว 28 ถ้ามีข้อมูล)
                             if len(prev_data) >= 28:
                                 new_sheet.delete_rows(28, len(prev_data))
                             
-                            st.success(f"✅ สร้างและยกยอดไปเดือน {next_month_name} สำเร็จ!")
+                            st.success(f"✅ บันทึกสถิติและขึ้นเดือนใหม่สำเร็จ!")
                             st.query_params["month"] = next_month_name
                             st.rerun()
                             
                         except Exception as e:
-                            st.error(f"❌ เกิดข้อผิดพลาดในการสร้างเดือนใหม่: {e}")
+                            st.error(f"❌ เกิดข้อผิดพลาด: {e}")
     # =====================================================================
 
 except Exception as e:
@@ -332,21 +332,33 @@ with col_tot2:
     st.metric("ส่วนต่าง", f"{diff:,.2f} ฿", delta=f"{diff:,.2f} ฿")
 
 # =====================================================================
-# --- [เพิ่มใหม่] กราฟสรุปรายจ่ายแบบ Dropdown ---
-st.markdown("---")
-with st.expander("📊 สัดส่วนและกราฟสรุปรายจ่าย (คลิกเพื่อเปิด/ปิด)"):
-    if total_used > 0:
-        # เตรียมข้อมูลสำหรับสร้างกราฟ
-        chart_data = pd.DataFrame({
-            "หมวดหมู่": ["ค่ากิน", "ใช้ส่วนตัว", "อื่นๆ"],
-            "เงินที่ใช้ไปแล้ว": [used_food, used_personal, used_other],
-            "งบที่ตั้งไว้": [budget_food, budget_personal, budget_other]
-        })
-        # ตั้งค่าให้คอลัมน์ "หมวดหมู่" เป็นแกน X
-        chart_data.set_index("หมวดหมู่", inplace=True)
+# --- กราฟสรุปรายจ่ายแบบ Dropdown ---
+with st.expander("📈 กราฟแนวโน้มการเงินระยะยาว (ข้ามเดือน)"):
+    try:
+        sum_sheet = spreadsheet.worksheet("Summary_Data")
+        sum_data = sum_sheet.get_all_values()
         
-        st.markdown("**เปรียบเทียบยอดใช้จ่ายจริงกับงบประมาณที่ตั้งไว้**")
-        st.bar_chart(chart_data)
-    else:
-        st.info("💡 ยังไม่มีบันทึกรายจ่ายในเดือนนี้ กราฟจะแสดงผลเมื่อมีการใช้เงินครับ")
+        if len(sum_data) > 1: # ต้องมีข้อมูลมากกว่าแค่หัวตาราง
+            # แปลงข้อมูลเป็น DataFrame
+            df_sum = pd.DataFrame(sum_data[1:], columns=sum_data[0])
+            
+            # แปลงค่าตัวเลขให้ถูกต้อง
+            for col in ["Accumulated", "Emergency", "Used", "Carry_Cash"]:
+                df_sum[col] = pd.to_numeric(df_sum[col], errors='coerce').fillna(0)
+            
+            df_sum.set_index("Month", inplace=True)
+
+            # กราฟที่ 1: แนวโน้มเงินเก็บ (สะสม + สำรอง)
+            st.markdown("**💰 แนวโน้มการเติบโตของเงินออม**")
+            st.line_chart(df_sum[["Accumulated", "Emergency"]])
+
+            # กราฟที่ 2: ยอดใช้จ่ายรวมรายเดือน
+            st.markdown("**💸 ยอดใช้จ่ายรวมในแต่ละเดือน**")
+            st.bar_chart(df_sum["Used"])
+            
+        else:
+            st.info("💡 ข้อมูลแนวโน้มจะปรากฏที่นี่ หลังจากที่คุณกด 'ปิดยอดและขึ้นเดือนใหม่' ครั้งแรกครับ")
+            
+    except Exception as e:
+        st.info("💡 ระบบยังไม่มีสถิติย้อนหลัง (จะเริ่มบันทึกเมื่อมีการกดปิดยอดเดือนครั้งแรก)")
 # =====================================================================
