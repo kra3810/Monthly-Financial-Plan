@@ -253,7 +253,7 @@ fig_circle = go.Figure(data=[go.Pie(
     values=[percent_used, remainder],
     labels=["ใช้ไปแล้ว", "งบที่เหลือ"],
     marker=dict(colors=[ring_color, "#EFEFEF"]), 
-    hole=0.9,         # ปรับจาก 0.8 เป็น 0.9 เพื่อให้ "เส้นบางลง"
+    hole=1,         # ปรับจาก 0.8 เป็น 0.9 เพื่อให้ "เส้นบางลง"
     textinfo='none',  
     hoverinfo='label+percent'
 )])
