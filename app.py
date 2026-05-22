@@ -372,14 +372,23 @@ with st.expander("📊 สัดส่วนและกราฟสรุปร
     )
     st.plotly_chart(fig_bar, use_container_width=True)
 
-    # 3. กราฟวงกลม: แสดงเฉพาะเมื่อมีการใช้จ่ายจริงเท่านั้น (เพื่อป้องกันกราฟพังถ้าค่าเป็น 0 ทั้งหมด)
-    if total_used > 0:
-        st.markdown("---")
-        st.markdown("**🍕 สัดส่วนรายจ่ายจริงในเดือนนี้**")
-        df_pie = pd.DataFrame({
+    # 3. กราฟแท่ง: เทียบงบที่ตั้ง vs ของจริง (แท่งอยู่ข้างกัน barmode='group')
+        st.markdown("**📊 เปรียบเทียบยอดใช้จ่ายจริงกับงบประมาณที่ตั้งไว้**")
+        df_bar = pd.DataFrame({
             "หมวดหมู่": ["ค่ากิน", "ใช้ส่วนตัว", "อื่นๆ"],
-            "ยอดเงิน": [used_food, used_personal, used_other]
+            "งบที่ตั้งไว้": [budget_food, budget_personal, budget_other],
+            "เงินที่ใช้ไปแล้ว": [used_food, used_personal, used_other]
         })
-        fig_pie = px.pie(df_pie, values="ยอดเงิน", names="หมวดหมู่", hole=0.3)
-        st.plotly_chart(fig_pie, use_container_width=True)
+        
+        fig_bar = px.bar(
+            df_bar, 
+            x="หมวดหมู่", 
+            y=["งบที่ตั้งไว้", "เงินที่ใช้ไปแล้ว"], 
+            barmode="group",
+            labels={"value": "จำนวนเงิน (฿)", "variable": "ประเภทยอดเงิน"}
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)
+        
+    else:
+        st.info("💡 ยังไม่มีบันทึกรายจ่ายในเดือนนี้ กราฟจะแสดงผลเมื่อมีการใช้เงินครับ")
 # =====================================================================
