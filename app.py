@@ -142,6 +142,7 @@ with st.sidebar:
 # --- 4. Dashboard & Input ---
 total_used = used_food + used_personal + used_other
 remaining_balance = val(2, 5) 
+remaining_time = val(12,2)
 
 # ในเมื่อ F3 คือยอดที่เหลือให้ใช้จริงๆ แบบไม่รวมเงินฉุกเฉินอยู่แล้ว
 # ฐานงบ 100% จึงเท่ากับ (ยอดที่ใช้ไปแล้ว + ยอดที่เหลือให้ใช้) ได้เลย ไม่ต้องลบซ้ำ
@@ -164,9 +165,9 @@ col1, col2, col3 = st.columns(3)
 with col1:
     st.metric(label="เงินเหลือใช้จ่าย", value=f"{remaining_balance:,.0f} ฿")
 with col2:
-    st.metric(label="สำรองที่แยกไว้", value=f"{sep_emergency:,.0f} ฿", delta=emergency_status, delta_color="off")
+    st.metric(label="เงินสำรองที่แยกไว้", value=f"{sep_emergency:,.0f} ฿", delta=emergency_status, delta_color="off")
 with col3:
-    st.metric(label="งบกลางคงเหลือ", value=f"{central_remain:,.0f} ฿")
+    st.metric(label="งบกลางคงเหลือ", value=f"{central_remain:,.0f} ฿", delta=remaining_time, delta_color="off")
 st.markdown("---")
 
 def get_text(r, c):
