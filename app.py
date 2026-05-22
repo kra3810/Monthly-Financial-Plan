@@ -333,33 +333,62 @@ with col_tot2:
     st.metric("ส่วนต่าง", f"{diff:,.2f} ฿", delta=f"{diff:,.2f} ฿")
 
 # =====================================================================
-# --- กราฟแนวโน้มการเงินระยะยาว (ข้ามเดือน) ---
-with st.expander("📈 กราฟแนวโน้มการเงินระยะยาว (ข้ามเดือน)"):
+# --- กราฟสรุปรายจ่ายแบบ Dropdown (รวมครบทุกกราฟและเงินยกยอดหลายเดือน) ---
+st.markdown("---")
+with st.expander("📊 สัดส่วนและกราฟสรุปรายจ่าย (คลิกเพื่อเปิด/ปิด)"):
+    
+    # 1. ดึงข้อมูลจาก Summary_Data มาทำเป็นกราฟเงินยกยอดสะสมหลายๆ เดือน
     try:
         sum_sheet = spreadsheet.worksheet("Summary_Data")
         sum_data = sum_sheet.get_all_values()
         
-        if len(sum_data) > 1: # ต้องมีข้อมูลมากกว่าแค่หัวตาราง
-            # แปลงข้อมูลเป็น DataFrame
+        if len(sum_data) > 1:
             df_sum = pd.DataFrame(sum_data[1:], columns=sum_data[0])
-            
-            # แปลงค่าตัวเลขให้สามารถนำมาพล็อตกราฟได้
-            for col in ["Accumulated", "Emergency", "Used", "Carry_Cash"]:
-                df_sum[col] = pd.to_numeric(df_sum[col], errors='coerce').fillna(0)
-            
+            df_sum["Carry_Cash"] = pd.to_numeric(df_sum["Carry_Cash"], errors='coerce').fillna(0)
             df_sum.set_index("Month", inplace=True)
-
-            # กราฟที่ 1: แนวโน้มเงินเก็บ (สะสม + สำรอง) แสดงเป็นกราฟเส้น
-            st.markdown("**💰 แนวโน้มการเติบโตของเงินออม (สะสม + สำรองฉุกเฉิน)**")
-            st.line_chart(df_sum[["Accumulated", "Emergency"]])
-
-            # กราฟที่ 2: เปรียบเทียบยอดใช้จ่าย กับ เงินที่เหลือยกยอดไปเดือนถัดไป
-            st.markdown("**💸 ยอดใช้จ่ายรวม และ เงินยกยอด ในแต่ละเดือน**")
-            st.bar_chart(df_sum[["Used", "Carry_Cash"]])
             
-        else:
-            st.info("💡 ข้อมูลแนวโน้มจะปรากฏที่นี่ หลังจากที่คุณกด 'ปิดยอดและขึ้นเดือนใหม่' ครั้งแรกครับ")
-            
-    except Exception as e:
-        st.info("💡 ระบบยังไม่มีสถิติย้อนหลัง (ต้องมีแผ่นงาน Summary_Data และเคยกดปิดยอดก่อน)")
+            st.markdown("**♻️ กราฟเงินยกยอดจากเดือนก่อน (เปรียบเทียบแต่ละเดือน)**")
+            st.bar_chart(df_sum[["Carry_Cash"]])
+            st.markdown("---")
+    except Exception:
+        pass
+
+    # คำนวณเงินยกยอดจากเดือนที่แล้วสำหรับแสดงข้อความแจ้งเตือนของเดือนปัจจุบัน
+    base_personal_budget = 900.0
+    rollover_money = budget_personal - base_personal_budget
+    
+    if rollover_money > 0:
+        st.success(f"🎉 **เยี่ยมมาก!** เดือนนี้คุณมีเงินยกยอดจากเดือนก่อนมาสมทบในงบส่วนตัว: **{rollover_money:,.2f} ฿**")
+    
+    if total_used > 0:
+        # 2. กราฟวงกลม: สัดส่วนเงินที่จ่ายไปเดือนนี้
+        st.markdown("**🍕 สัดส่วนเงินที่จ่ายไปเดือนนี้**")
+        df_pie = pd.DataFrame({
+            "หมวดหมู่": ["ค่ากิน", "ใช้ส่วนตัว", "อื่นๆ"],
+            "ยอดเงิน": [used_food, used_personal, used_other]
+        })
+        fig_pie = px.pie(df_pie, values="ยอดเงิน", names="หมวดหมู่", hole=0.3)
+        st.plotly_chart(fig_pie, use_container_width=True)
+
+        st.markdown("---")
+        
+        # 3. กราฟแท่ง: เทียบงบที่ตั้ง vs ของจริง (แท่งอยู่ข้างกัน barmode='group')
+        st.markdown("**📊 เปรียบเทียบยอดใช้จ่ายจริงกับงบประมาณที่ตั้งไว้**")
+        df_bar = pd.DataFrame({
+            "หมวดหมู่": ["ค่ากิน", "ใช้ส่วนตัว", "อื่นๆ"],
+            "งบที่ตั้งไว้": [budget_food, budget_personal, budget_other],
+            "เงินที่ใช้ไปแล้ว": [used_food, used_personal, used_other]
+        })
+        
+        fig_bar = px.bar(
+            df_bar, 
+            x="หมวดหมู่", 
+            y=["งบที่ตั้งไว้", "เงินที่ใช้ไปแล้ว"], 
+            barmode="group",
+            labels={"value": "จำนวนเงิน (฿)", "variable": "ประเภทยอดเงิน"}
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)
+        
+    else:
+        st.info("💡 ยังไม่มีบันทึกรายจ่ายในเดือนนี้ กราฟจะแสดงผลเมื่อมีการใช้เงินครับ")
 # =====================================================================
