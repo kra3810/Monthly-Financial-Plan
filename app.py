@@ -127,7 +127,7 @@ with st.sidebar:
     
     if m_key not in st.session_state: st.session_state[m_key] = str(monthly_allowance)
     if a_key not in st.session_state: st.session_state[a_key] = str(accumulated_allowance)
-    if e_ket not in st.session_state: st.session_state[e_key] = str(emergency_fund)
+    if e_key not in st.session_state: st.session_state[e_key] = str(emergency_fund)
         
     st.text_input("รับเงินจากบ้าน (พิมพ์สมการแล้วกด Enter)", key=m_key, on_change=auto_update, args=(m_key, 'F2'))
     st.text_input("เงินสะสม (พิมพ์สมการแล้วกด Enter)", key=a_key, on_change=auto_update, args=(a_key, 'B18'))
