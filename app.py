@@ -4,6 +4,7 @@ import gspread
 from google.oauth2.service_account import Credentials
 import datetime
 import re
+import plotly.express as px
 
 st.set_page_config(page_title="Kla Finance v1.0", layout="centered")
 
@@ -333,32 +334,28 @@ with col_tot2:
 
 # =====================================================================
 # --- กราฟสรุปรายจ่ายแบบ Dropdown ---
-with st.expander("📈 กราฟแนวโน้มการเงินระยะยาว (ข้ามเดือน)"):
-    try:
-        sum_sheet = spreadsheet.worksheet("Summary_Data")
-        sum_data = sum_sheet.get_all_values()
+st.markdown("---")
+with st.expander("📊 สัดส่วนและกราฟสรุปรายจ่าย (คลิกเพื่อเปิด/ปิด)"):
+    if total_used > 0:
+        # กราฟวงกลม: สัดส่วนเงินที่จ่ายไป
+        st.markdown("**🍕 สัดส่วนเงินที่จ่ายไปเดือนนี้**")
+        df_pie = pd.DataFrame({
+            "หมวดหมู่": ["ค่ากิน", "ใช้ส่วนตัว", "อื่นๆ"],
+            "ยอดเงิน": [used_food, used_personal, used_other]
+        })
+        fig = px.pie(df_pie, values="ยอดเงิน", names="หมวดหมู่", hole=0.3)
+        st.plotly_chart(fig, use_container_width=True)
+
+        st.markdown("---")
         
-        if len(sum_data) > 1: # ต้องมีข้อมูลมากกว่าแค่หัวตาราง
-            # แปลงข้อมูลเป็น DataFrame
-            df_sum = pd.DataFrame(sum_data[1:], columns=sum_data[0])
-            
-            # แปลงค่าตัวเลขให้ถูกต้อง
-            for col in ["Accumulated", "Emergency", "Used", "Carry_Cash"]:
-                df_sum[col] = pd.to_numeric(df_sum[col], errors='coerce').fillna(0)
-            
-            df_sum.set_index("Month", inplace=True)
-
-            # กราฟที่ 1: แนวโน้มเงินเก็บ (สะสม + สำรอง)
-            st.markdown("**💰 แนวโน้มการเติบโตของเงินออม**")
-            st.line_chart(df_sum[["Accumulated", "Emergency"]])
-
-            # กราฟที่ 2: ยอดใช้จ่ายรวมรายเดือน
-            st.markdown("**💸 ยอดใช้จ่ายรวมในแต่ละเดือน**")
-            st.bar_chart(df_sum["Used"])
-            
-        else:
-            st.info("💡 ข้อมูลแนวโน้มจะปรากฏที่นี่ หลังจากที่คุณกด 'ปิดยอดและขึ้นเดือนใหม่' ครั้งแรกครับ")
-            
-    except Exception as e:
-        st.info("💡 ระบบยังไม่มีสถิติย้อนหลัง (จะเริ่มบันทึกเมื่อมีการกดปิดยอดเดือนครั้งแรก)")
+        # กราฟแท่ง: เทียบงบที่ตั้ง vs ของจริง
+        st.markdown("**📊 เปรียบเทียบยอดใช้จ่ายจริงกับงบประมาณที่ตั้งไว้**")
+        chart_data = pd.DataFrame({
+            "หมวดหมู่": ["ค่ากิน", "ใช้ส่วนตัว", "อื่นๆ"],
+            "เงินที่ใช้ไปแล้ว": [used_food, used_personal, used_other],
+            "งบที่ตั้งไว้": [budget_food, budget_personal, budget_other]
+        }).set_index("หมวดหมู่")
+        st.bar_chart(chart_data)
+    else:
+        st.info("💡 ยังไม่มีบันทึกรายจ่ายในเดือนนี้ กราฟจะแสดงผลเมื่อมีการใช้เงินครับ")
 # =====================================================================
