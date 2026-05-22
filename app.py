@@ -235,38 +235,39 @@ except Exception as e:
     print(f"Warning: ดึงสถานะฉุกเฉินไม่ได้ -> {e}")
     emergency_status = ""
 
-        # สร้างวงแหวน 360 องศา (Donut Progress Ring)
-        st.markdown("**🎯 สถานะการใช้งบประมาณเดือนนี้**")
-        
-        # คำนวณส่วนที่เหลือ (ถ้าใช้เกิน 100% ให้ส่วนที่เหลือเป็น 0)
-        remainder = 100 - percent_used if percent_used < 100 else 0
-        
-        # กำหนดสีแถบตามความวิกฤต
-        if percent_used >= 90:
-            ring_color = "#FF6B6B"  # โซนอันตราย (สีแดง)
-        elif percent_used >= 80:
-            ring_color = "#FFD166"  # โซนเฝ้าระวัง (สีเหลือง)
-        else:
-            ring_color = "#4ECDC4"  # โซนปลอดภัย (สีเขียว)
+# สร้างวงแหวน 360 องศา (Donut Progress Ring)
+st.markdown("**🎯 สถานะการใช้งบประมาณเดือนนี้**")
 
-        fig_circle = go.Figure(data=[go.Pie(
-            values=[percent_used, remainder],
-            labels=["ใช้ไปแล้ว", "งบที่เหลือ"],
-            marker=dict(colors=[ring_color, "#EFEFEF"]), # สีแถบสถานะ และ สีพื้นหลังวงแหวน
-            hole=0.8,         # ความหนาของวงแหวน (ยิ่งใกล้ 1 ยิ่งบาง)
-            textinfo='none',  # ซ่อนตัวหนังสือรอบๆ
-            hoverinfo='label+percent'
-        )])
+# คำนวณส่วนที่เหลือ (ถ้าใช้เกิน 100% ให้ส่วนที่เหลือเป็น 0)
+remainder = 100 - percent_used if percent_used < 100 else 0
 
-        # ใส่ตัวเลขเปอร์เซ็นต์ไว้ตรงกลางวงแหวน
-        fig_circle.update_layout(
-            showlegend=False,
-            annotations=[dict(text=f"{percent_used:.0f}%", x=0.5, y=0.5, font_size=40, showarrow=False)],
-            height=250,
-            margin=dict(l=20, r=20, t=30, b=20)
-        )
+# กำหนดสีแถบตามความวิกฤต
+if percent_used >= 90:
+    ring_color = "#FF6B6B"  # โซนอันตราย (สีแดง)
+elif percent_used >= 80:
+    ring_color = "#FFD166"  # โซนเฝ้าระวัง (สีเหลือง)
+else:
+    ring_color = "#4ECDC4"  # โซนปลอดภัย (สีเขียว)
 
-        st.plotly_chart(fig_circle, use_container_width=True)
+fig_circle = go.Figure(data=[go.Pie(
+    values=[percent_used, remainder],
+    labels=["ใช้ไปแล้ว", "งบที่เหลือ"],
+    marker=dict(colors=[ring_color, "#EFEFEF"]), # สีแถบสถานะ และ สีพื้นหลังวงแหวน
+    hole=0.8,         # ความหนาของวงแหวน (ยิ่งใกล้ 1 ยิ่งบาง)
+    textinfo='none',  # ซ่อนตัวหนังสือรอบๆ
+    hoverinfo='label+percent'
+)])
+
+# ใส่ตัวเลขเปอร์เซ็นต์ไว้ตรงกลางวงแหวน
+fig_circle.update_layout(
+    showlegend=False,
+    annotations=[dict(text=f"{percent_used:.0f}%", x=0.5, y=0.5, font_size=40, showarrow=False)],
+    height=250,
+    margin=dict(l=20, r=20, t=30, b=20)
+)
+
+st.plotly_chart(fig_circle, use_container_width=True)
+
 
 
 
