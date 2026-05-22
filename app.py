@@ -235,35 +235,39 @@ except Exception as e:
     print(f"Warning: ดึงสถานะฉุกเฉินไม่ได้ -> {e}")
     emergency_status = ""
 
-        # สร้างหน้าปัดวงกลม (Gauge) บอกเปอร์เซ็นต์การใช้เงิน
-st.markdown("**🎯 สถานะการใช้งบประมาณเดือนนี้**")
+        # สร้างวงแหวน 360 องศา (Donut Progress Ring)
+        st.markdown("**🎯 สถานะการใช้งบประมาณเดือนนี้**")
+        
+        # คำนวณส่วนที่เหลือ (ถ้าใช้เกิน 100% ให้ส่วนที่เหลือเป็น 0)
+        remainder = 100 - percent_used if percent_used < 100 else 0
+        
+        # กำหนดสีแถบตามความวิกฤต
+        if percent_used >= 90:
+            ring_color = "#FF6B6B"  # โซนอันตราย (สีแดง)
+        elif percent_used >= 80:
+            ring_color = "#FFD166"  # โซนเฝ้าระวัง (สีเหลือง)
+        else:
+            ring_color = "#4ECDC4"  # โซนปลอดภัย (สีเขียว)
 
-fig_gauge = go.Figure(go.Indicator(
-    mode = "gauge+number",
-    value = percent_used, # ดึงตัวเลขเปอร์เซ็นต์ที่คุณคำนวณไว้มาใช้
-    number = {'suffix': "%", 'font': {'size': 40}},
-    domain = {'x': [0, 1], 'y': [0, 1]},
-    gauge = {
-        'axis': {'range': [0, 100], 'tickwidth': 1, 'tickcolor': "darkblue"},
-        'bar': {'color': "#4ECDC4"}, # สีของแถบที่วิ่งไปตามยอดใช้จริง
-        'bgcolor': "white",
-        'borderwidth': 2,
-        'bordercolor': "gray",
-        'steps': [
-            {'range': [0, 50], 'color': "#E8F8F5"},    # โซนปลอดภัย (สีเขียวอ่อน)
-            {'range': [50, 80], 'color': "#FCF3CF"},    # โซนเฝ้าระวัง (สีเหลืองอ่อน)
-            {'range': [80, 100], 'color': "#FADBD8"}],  # โซนอันตราย (สีแดงอ่อน)
-        'threshold': {
-            'line': {'color': "red", 'width': 4},
-            'thickness': 0.75,
-            'value': 90 # ขีดเส้นแดงเตือนเมื่อใช้เงินทะลุ 90%
-        }
-    }
-))
+        fig_circle = go.Figure(data=[go.Pie(
+            values=[percent_used, remainder],
+            labels=["ใช้ไปแล้ว", "งบที่เหลือ"],
+            marker=dict(colors=[ring_color, "#EFEFEF"]), # สีแถบสถานะ และ สีพื้นหลังวงแหวน
+            hole=0.8,         # ความหนาของวงแหวน (ยิ่งใกล้ 1 ยิ่งบาง)
+            textinfo='none',  # ซ่อนตัวหนังสือรอบๆ
+            hoverinfo='label+percent'
+        )])
 
-# ปรับขนาดและระยะขอบของวงกลมไม่ให้กินพื้นที่เยอะเกินไป
-fig_gauge.update_layout(height=250, margin=dict(l=20, r=20, t=30, b=20))
-st.plotly_chart(fig_gauge, use_container_width=True)
+        # ใส่ตัวเลขเปอร์เซ็นต์ไว้ตรงกลางวงแหวน
+        fig_circle.update_layout(
+            showlegend=False,
+            annotations=[dict(text=f"{percent_used:.0f}%", x=0.5, y=0.5, font_size=40, showarrow=False)],
+            height=250,
+            margin=dict(l=20, r=20, t=30, b=20)
+        )
+
+        st.plotly_chart(fig_circle, use_container_width=True)
+
 
 
 
