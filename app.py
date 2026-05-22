@@ -333,9 +333,18 @@ with col_tot2:
     st.metric("ส่วนต่าง", f"{diff:,.2f} ฿", delta=f"{diff:,.2f} ฿")
 
 # =====================================================================
-# --- กราฟสรุปรายจ่ายแบบ Dropdown ---
+# --- กราฟสรุปรายจ่ายแบบ Dropdown (แก้กราฟแท่ง + เพิ่มเงินยกยอด) ---
 st.markdown("---")
 with st.expander("📊 สัดส่วนและกราฟสรุปรายจ่าย (คลิกเพื่อเปิด/ปิด)"):
+    
+    # คำนวณเงินยกยอดจากเดือนที่แล้ว (สมมติว่าฐานงบส่วนตัวปกติคือ 900 บาท)
+    # ถ้ายอด budget_personal มากกว่า 900 แสดงว่าเป็นเงินที่ทบมาจากเดือนก่อน
+    base_personal_budget = 900.0
+    rollover_money = budget_personal - base_personal_budget
+    
+    if rollover_money > 0:
+        st.success(f"🎉 **เยี่ยมมาก!** เดือนนี้คุณมีเงินยกยอดจากเดือนก่อนมาสมทบในงบส่วนตัว: **{rollover_money:,.2f} ฿**")
+    
     if total_used > 0:
         # กราฟวงกลม: สัดส่วนเงินที่จ่ายไป
         st.markdown("**🍕 สัดส่วนเงินที่จ่ายไปเดือนนี้**")
@@ -343,19 +352,28 @@ with st.expander("📊 สัดส่วนและกราฟสรุปร
             "หมวดหมู่": ["ค่ากิน", "ใช้ส่วนตัว", "อื่นๆ"],
             "ยอดเงิน": [used_food, used_personal, used_other]
         })
-        fig = px.pie(df_pie, values="ยอดเงิน", names="หมวดหมู่", hole=0.3)
-        st.plotly_chart(fig, use_container_width=True)
+        fig_pie = px.pie(df_pie, values="ยอดเงิน", names="หมวดหมู่", hole=0.3)
+        st.plotly_chart(fig_pie, use_container_width=True)
 
         st.markdown("---")
         
-        # กราฟแท่ง: เทียบงบที่ตั้ง vs ของจริง
+        # กราฟแท่ง: เทียบงบที่ตั้ง vs ของจริง (แก้ให้แท่งอยู่ข้างกันด้วย barmode='group')
         st.markdown("**📊 เปรียบเทียบยอดใช้จ่ายจริงกับงบประมาณที่ตั้งไว้**")
-        chart_data = pd.DataFrame({
+        df_bar = pd.DataFrame({
             "หมวดหมู่": ["ค่ากิน", "ใช้ส่วนตัว", "อื่นๆ"],
-            "เงินที่ใช้ไปแล้ว": [used_food, used_personal, used_other],
-            "งบที่ตั้งไว้": [budget_food, budget_personal, budget_other]
-        }).set_index("หมวดหมู่")
-        st.bar_chart(chart_data)
+            "งบที่ตั้งไว้": [budget_food, budget_personal, budget_other],
+            "เงินที่ใช้ไปแล้ว": [used_food, used_personal, used_other]
+        })
+        
+        fig_bar = px.bar(
+            df_bar, 
+            x="หมวดหมู่", 
+            y=["งบที่ตั้งไว้", "เงินที่ใช้ไปแล้ว"], 
+            barmode="group", # คำสั่งนี้ทำให้แท่งกราฟอยู่ข้างกัน
+            labels={"value": "จำนวนเงิน (฿)", "variable": "ประเภทยอดเงิน"}
+        )
+        st.plotly_chart(fig_bar, use_container_width=True)
+        
     else:
         st.info("💡 ยังไม่มีบันทึกรายจ่ายในเดือนนี้ กราฟจะแสดงผลเมื่อมีการใช้เงินครับ")
 # =====================================================================
