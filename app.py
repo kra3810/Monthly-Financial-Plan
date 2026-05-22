@@ -123,7 +123,7 @@ with st.sidebar:
     
     m_key = f"m_allow_{selected_month}"
     a_key = f"a_allow_{selected_month}"
-    e_key = f"a_allow_{selected_month}"
+    e_key = f"e_allow_{selected_month}"
     
     if m_key not in st.session_state: st.session_state[m_key] = str(monthly_allowance)
     if a_key not in st.session_state: st.session_state[a_key] = str(accumulated_allowance)
