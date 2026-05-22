@@ -356,16 +356,25 @@ with st.expander("📊 สัดส่วนและกราฟสรุปร
 
     # ตรวจสอบว่ามีการใช้จ่ายในเดือนนี้หรือไม่
     if total_used > 0:
-        # 2. กราฟวงกลม: สัดส่วนเงินที่จ่ายไปเดือนนี้
+                # 2. กราฟวงกลม: สัดส่วนเงินที่จ่ายไปเดือนนี้
         st.markdown("**🍕 สัดส่วนเงินที่จ่ายไปเดือนนี้**")
         df_pie = pd.DataFrame({
             "หมวดหมู่": ["ค่ากิน", "ใช้ส่วนตัว", "อื่นๆ"],
             "ยอดเงิน": [used_food, used_personal, used_other]
         })
-        # กรองเอาเฉพาะหมวดที่มีการใช้เงิน > 0 เพื่อไม่ให้กราฟดูรก
         df_pie = df_pie[df_pie["ยอดเงิน"] > 0]
         
-        fig_pie = px.pie(df_pie, values="ยอดเงิน", names="หมวดหมู่", hole=0.3)
+        # กำหนดสีเฉพาะเจาะจงให้แต่ละหมวด (เปลี่ยนโค้ดสี Hex ได้ตามต้องการ)
+        pie_colors = {"ค่ากิน": "#FF6B6B", "ใช้ส่วนตัว": "#4ECDC4", "อื่นๆ": "#FFE66D"}
+        
+        fig_pie = px.pie(
+            df_pie, 
+            values="ยอดเงิน", 
+            names="หมวดหมู่", 
+            hole=0.3,
+            color="หมวดหมู่",
+            color_discrete_map=pie_colors # สั่งให้ใช้สีตามที่กำหนด
+        )
         st.plotly_chart(fig_pie, use_container_width=True)
 
         st.markdown("---")
@@ -378,12 +387,16 @@ with st.expander("📊 สัดส่วนและกราฟสรุปร
             "เงินที่ใช้ไปแล้ว": [used_food, used_personal, used_other]
         })
 
+        # กำหนดสีแยกชัดเจน: งบ (สีฟ้าอ่อน/เทา) vs ใช้จริง (สีแดง/ส้ม)
+        bar_colors = {"งบที่ตั้งไว้": "#7895CB", "เงินที่ใช้ไปแล้ว": "#FF7676"}
+        
         fig_bar = px.bar(
             df_bar, 
             x="หมวดหมู่", 
             y=["งบที่ตั้งไว้", "เงินที่ใช้ไปแล้ว"], 
             barmode="group",
-            labels={"value": "จำนวนเงิน (฿)", "variable": "ประเภทยอดเงิน"}
+            labels={"value": "จำนวนเงิน (฿)", "variable": "ประเภทยอดเงิน"},
+            color_discrete_map=bar_colors # สั่งให้ใช้สีตามที่กำหนด
         )
         st.plotly_chart(fig_bar, use_container_width=True)
 
