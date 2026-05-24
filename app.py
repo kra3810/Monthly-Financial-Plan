@@ -437,38 +437,58 @@ with st.expander("📊 สัดส่วนและกราฟสรุปร
 
         st.markdown("---")
         
-        # 4. กราฟแท่ง: วิเคราะห์และเป้าหมายเงินสำรองฉุกเฉิน
-        st.markdown("**🛡️ วิเคราะห์เป้าหมายเงินสำรองฉุกเฉิน**")
+                # 4. กราฟเส้น: สถิติและการเติบโตของเงินสำรองฉุกเฉิน
+        st.markdown("**🛡️ สถิติและเป้าหมายเงินสำรองฉุกเฉิน**")
         
         # ดึงค่าพิกัดเซลล์จริงมาคำนวณฐานยอดรวม SUM(B22, B23, B25)
-        # B22 = val(21, 1), B23 = val(22, 1), B25 = val(24, 1)
         base_expenses = val(21, 1) + val(22, 1) + val(24, 1)
 
-        # ตั้งค่าเกณฑ์เส้นแบ่งตามจำนวนเท่าในสูตร IFS
+        # ตั้งค่าเกณฑ์เส้นแบ่งตามจำนวนเท่า
         level_red = base_expenses          # ต่ำกว่า 1 เท่า = วิกฤต
-        level_yellow = base_expenses * 3     # ต่ำกว่า 3 เท่า = เริ่มตึง
-        level_green = base_expenses * 6      # 6 เท่าขึ้นไป = ปลอดภัย
+        level_yellow = base_expenses * 3   # ต่ำกว่า 3 เท่า = เริ่มตึง
+        level_green = base_expenses * 6    # 6 เท่าขึ้นไป = ปลอดภัย
 
-        # จัดข้อมูลเงินเก็บปัจจุบันลง DataFrame
-        df_emg = pd.DataFrame({
-            "รายการ": ["เงินเก็บฉุกเฉินปัจจุบัน"],
-            "จำนวนเงิน (฿)": [emergency_fund]
-        })
+        # --- ส่วนที่เพิ่มใหม่: ดึงประวัติจาก Summary_Data ---
+        history_records = []
+        try:
+            sum_sheet = spreadsheet.worksheet("Summary_Data")
+            sum_data = sum_sheet.get_all_values()
+            if len(sum_data) > 1:
+                for row in sum_data[1:]:
+                    # row[2] คือคอลัมน์ Emergency ใน Summary_Data
+                    history_records.append({"เดือน": row[0], "เงินฉุกเฉิน": float(row[2].replace(',', ''))})
+        except Exception:
+            pass
 
-        # เช็คกรณี base_expenses เป็น 0 เพื่อป้องกัน Error ตอนตั้งค่าเพดานกราฟ
-        max_y_axis = max(level_green * 1.2, emergency_fund * 1.2)
+        # นำเดือนปัจจุบันต่อท้ายเข้าไปด้วย เพื่อให้กราฟอัปเดตแบบเรียลไทม์
+        if not any(r["เดือน"] == selected_month for r in history_records):
+            history_records.append({"เดือน": selected_month, "เงินฉุกเฉิน": emergency_fund})
+        else:
+            for r in history_records:
+                if r["เดือน"] == selected_month:
+                    r["เงินฉุกเฉิน"] = emergency_fund
+
+        df_emg = pd.DataFrame(history_records)
+
+        # เช็คเพดานกราฟ
+        max_history_val = df_emg["เงินฉุกเฉิน"].max() if not df_emg.empty else 0
+        max_y_axis = max(level_green * 1.2, max_history_val * 1.2)
         if max_y_axis == 0: max_y_axis = 10000 
 
-        # สร้างกราฟแท่งแสดงยอดเงินปัจจุบัน
-        fig_emg = px.bar(
+        # สร้างกราฟเส้น (Line Chart) แสดงการเติบโต
+        fig_emg = px.line(
             df_emg,
-            x="รายการ",
-            y="จำนวนเงิน (฿)",
+            x="เดือน",
+            y="เงินฉุกเฉิน",
+            markers=True, # ใส่จุดที่แต่ละเดือน
             range_y=[0, max_y_axis], 
             color_discrete_sequence=["#4ECDC4"]
         )
+        
+        # ระบายสีใต้กราฟเส้นให้ดูสวยและเห็นมวลของเงิน (ตัวเลือกเพิ่มเติม)
+        fig_emg.update_traces(fill='tozeroy', fillcolor='rgba(78, 205, 196, 0.2)')
 
-        # ตีเส้นเกณฑ์แนวนอนแบ่งระดับตามสูตร
+        # ตีเส้นเกณฑ์แนวนอนแบ่งระดับ
         fig_emg.add_hline(y=level_red, line_dash="dash", line_color="#FF6B6B", 
                           annotation_text=f"🔴 วิกฤต ({level_red:,.0f} ฿)", annotation_position="top left")
         
@@ -476,12 +496,13 @@ with st.expander("📊 สัดส่วนและกราฟสรุปร
                           annotation_text=f"🟡 เริ่มตึง ({level_yellow:,.0f} ฿)", annotation_position="top left")
         
         fig_emg.add_hline(y=level_green, line_dash="solid", line_color="#4EA8DE", 
-                          annotation_text=f"🔵 ปลอดภัย [6 เท่าขึ้นไป] ({level_green:,.0f} ฿)", annotation_position="top left")
+                          annotation_text=f"🔵 ปลอดภัย ({level_green:,.0f} ฿)", annotation_position="top left")
 
         # ปรับแต่งการแสดงผล
         fig_emg.update_layout(xaxis_title=None, height=400, margin=dict(l=20, r=20, t=30, b=20))
         
         st.plotly_chart(fig_emg, use_container_width=True)
+
 
     else:
         # จะแสดงข้อความนี้ก็ต่อเมื่อยอดใช้จ่ายรวม (total_used) เป็น 0 จริงๆ
