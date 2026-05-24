@@ -431,6 +431,57 @@ with st.expander("📊 สัดส่วนและกราฟสรุปร
             color_discrete_map=bar_colors # สั่งให้ใช้สีตามที่กำหนด
         )
         st.plotly_chart(fig_bar, use_container_width=True)
+        
+                # (โค้ดเดิม) fig_bar = px.bar(...)
+        # (โค้ดเดิม) st.plotly_chart(fig_bar, use_container_width=True)
+
+        st.markdown("---")
+        
+        # 4. กราฟแท่ง: วิเคราะห์และเป้าหมายเงินสำรองฉุกเฉิน
+        st.markdown("**🛡️ วิเคราะห์เป้าหมายเงินสำรองฉุกเฉิน**")
+        
+        # ดึงค่าพิกัดเซลล์จริงมาคำนวณฐานยอดรวม SUM(B22, B23, B25)
+        # B22 = val(21, 1), B23 = val(22, 1), B25 = val(24, 1)
+        base_expenses = val(21, 1) + val(22, 1) + val(24, 1)
+
+        # ตั้งค่าเกณฑ์เส้นแบ่งตามจำนวนเท่าในสูตร IFS
+        level_red = base_expenses          # ต่ำกว่า 1 เท่า = วิกฤต
+        level_yellow = base_expenses * 3     # ต่ำกว่า 3 เท่า = เริ่มตึง
+        level_green = base_expenses * 6      # 6 เท่าขึ้นไป = ปลอดภัย
+
+        # จัดข้อมูลเงินเก็บปัจจุบันลง DataFrame
+        df_emg = pd.DataFrame({
+            "รายการ": ["เงินเก็บฉุกเฉินปัจจุบัน"],
+            "จำนวนเงิน (฿)": [emergency_fund]
+        })
+
+        # เช็คกรณี base_expenses เป็น 0 เพื่อป้องกัน Error ตอนตั้งค่าเพดานกราฟ
+        max_y_axis = max(level_green * 1.2, emergency_fund * 1.2)
+        if max_y_axis == 0: max_y_axis = 10000 
+
+        # สร้างกราฟแท่งแสดงยอดเงินปัจจุบัน
+        fig_emg = px.bar(
+            df_emg,
+            x="รายการ",
+            y="จำนวนเงิน (฿)",
+            range_y=[0, max_y_axis], 
+            color_discrete_sequence=["#4ECDC4"]
+        )
+
+        # ตีเส้นเกณฑ์แนวนอนแบ่งระดับตามสูตร
+        fig_emg.add_hline(y=level_red, line_dash="dash", line_color="#FF6B6B", 
+                          annotation_text=f"🔴 วิกฤต ({level_red:,.0f} ฿)", annotation_position="top left")
+        
+        fig_emg.add_hline(y=level_yellow, line_dash="dash", line_color="#FFD166", 
+                          annotation_text=f"🟡 เริ่มตึง ({level_yellow:,.0f} ฿)", annotation_position="top left")
+        
+        fig_emg.add_hline(y=level_green, line_dash="solid", line_color="#4EA8DE", 
+                          annotation_text=f"🔵 ปลอดภัย [6 เท่าขึ้นไป] ({level_green:,.0f} ฿)", annotation_position="top left")
+
+        # ปรับแต่งการแสดงผล
+        fig_emg.update_layout(xaxis_title=None, height=400, margin=dict(l=20, r=20, t=30, b=20))
+        
+        st.plotly_chart(fig_emg, use_container_width=True)
 
     else:
         # จะแสดงข้อความนี้ก็ต่อเมื่อยอดใช้จ่ายรวม (total_used) เป็น 0 จริงๆ
