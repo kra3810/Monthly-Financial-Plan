@@ -259,7 +259,7 @@ fig_circle = go.Figure(data=[go.Pie(
     hole=0.9,         # ปรับจาก 0.8 เป็น 0.9 เพื่อให้ "เส้นบางลง"
     textinfo='none',  
     hoverinfo='label+percent',
-    direction='counterclockwise',
+    direction='clockwise',
     sort=False
 )])
 
