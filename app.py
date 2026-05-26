@@ -252,15 +252,16 @@ elif remainder <= 30:
 else:
     ring_color = "#4ECDC4"  # โซนปลอดภัย (สีเขียว) เมื่อยังเหลือเงินเยอะ
 
+# สลับลำดับ: เอา "งบที่เหลือ (สีเทา)" ขึ้นมาวาดก่อน 
 fig_circle = go.Figure(data=[go.Pie(
-    values=[percent_used, remainder],
-    labels=["ใช้ไปแล้ว", "งบที่เหลือ"],
-    marker=dict(colors=[ring_color, "#EFEFEF"]), 
+    values=[remainder, percent_used],
+    labels=["งบที่เหลือ", "ใช้ไปแล้ว"],
+    marker=dict(colors=["#EFEFEF", ring_color]), # สลับให้สีเทาอยู่ค่าแรก
     hole=0.9,         # ปรับจาก 0.8 เป็น 0.9 เพื่อให้ "เส้นบางลง"
     textinfo='none',  
     hoverinfo='label+percent',
-    direction='clockwise',
-    sort=False
+    direction='clockwise', # ให้ระบบเดินตามเข็มปกติ
+    sort=False             # ห้ามสลับตำแหน่งเอง
 )])
 
 # ใส่ตัวเลขเปอร์เซ็นต์ไว้ตรงกลางวงแหวน และปรับขนาดรวมให้เล็กลง
