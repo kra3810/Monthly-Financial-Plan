@@ -260,8 +260,7 @@ fig_circle = go.Figure(data=[go.Pie(
     textinfo='none',  
     hoverinfo='label+percent',
     direction='counterclockwise',
-    sort=False,
-    rotation=90
+    sort=False
 )])
 
 # ใส่ตัวเลขเปอร์เซ็นต์ไว้ตรงกลางวงแหวน และปรับขนาดรวมให้เล็กลง
