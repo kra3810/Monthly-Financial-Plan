@@ -82,18 +82,21 @@ try:
                             
                             summary_sheet.append_row([selected_month, acc_val, emg_val, used_total, carry_cash])
 
-                            # 3. ขึ้นเดือนใหม่ (เหมือนเดิม)
-                            new_personal_budget = get_v(23, 1) + carry_cash
+                            # 3. ขึ้นเดือนใหม่ (แก้ไขเพื่อรักษาสูตร B24 และส่งยอดไป F4)
                             spreadsheet.duplicate_sheet(source_sheet_id=prev_sheet.id, new_sheet_name=next_month_name)
                             new_sheet = spreadsheet.worksheet(next_month_name)
-                            
+
                             updates = [
-                                {'range': 'B3', 'values': [[0]]}, {'range': 'B4', 'values': [[0]]},
-                                {'range': 'B5', 'values': [[0]]}, {'range': 'F2', 'values': [[0]]},
-                                {'range': 'B11', 'values': [[0]]}, {'range': 'B12', 'values': [[0]]},
-                                {'range': 'B24', 'values': [[new_personal_budget]]}
+                                {'range': 'B3', 'values': [[0]]},   # รีเซ็ตยอดกิน
+                                {'range': 'B4', 'values': [[0]]},   # รีเซ็ตยอดส่วนตัว
+                                {'range': 'B5', 'values': [[0]]},   # รีเซ็ตยอดอื่นๆ
+                                {'range': 'F2', 'values': [[0]]},   # รีเซ็ตเงินที่รับจากบ้านเป็น 0
+                                {'range': 'B11', 'values': [[0]]},  # รีเซ็ตเงินสดในมือ
+                                {'range': 'B12', 'values': [[0]]},  # รีเซ็ตเงินโอน
+                                {'range': 'F4', 'values': [[carry_cash]]} # นำเงินเหลือจากเดือนเก่ามาหยอดใส่ช่อง F4 ตรงนี้แทน
                             ]
                             new_sheet.batch_update(updates)
+
                             
                             if len(prev_data) >= 28:
                                 new_sheet.delete_rows(28, len(prev_data))
