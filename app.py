@@ -56,12 +56,12 @@ try:
             next_month_name = f"{thai_months[next_m_num]} {next_y_num}"
             
             if next_month_name not in month_list:
-                if st.button(f"➕ ปิดยอดและขึ้นเดือนใหม่ ({next_month_name})", use_container_width=True):
+                                if st.button(f"➕ ปิดยอดและขึ้นเดือนใหม่ ({next_month_name})", use_container_width=True):
                     with st.spinner(f"กำลังสรุปยอดและสร้างเดือนใหม่..."):
                         try:
                             prev_sheet = spreadsheet.worksheet(selected_month)
                             prev_data = prev_sheet.get_all_values()
-                            
+
                             def get_v(r, c):
                                 try: return float(prev_data[r][c].replace(',', '').strip())
                                 except: return 0.0
@@ -71,16 +71,18 @@ try:
                             emg_val = get_v(12, 1)    # เงินสำรองฉุกเฉิน (B13)
                             used_total = get_v(2, 1) + get_v(3, 1) + get_v(4, 1) # ยอดใช้จ่ายรวม
                             carry_cash = get_v(10, 1) + get_v(11, 1) # เงินเหลือในมือ
+                            personal_inc = get_v(15, 5) # ดึงรายได้ส่วนตัวจาก F16 (Row 16->15, Col F->5)
 
                             # 2. บันทึกลงหน้า Summary_Data
                             try:
                                 summary_sheet = spreadsheet.worksheet("Summary_Data")
                             except:
-                                # ถ้าเผลอลบหน้า Summary ไป ให้ระบบสร้างใหม่ให้
+                                # ถ้าเผลอลบหน้า Summary ไป ให้ระบบสร้างใหม่ให้ (เพิ่มหัวข้อคอลัมน์ F)
                                 summary_sheet = spreadsheet.add_worksheet(title="Summary_Data", rows="100", cols="10")
-                                summary_sheet.append_row(["Month", "Accumulated", "Emergency", "Used", "Carry_Cash"])
-                            
-                            summary_sheet.append_row([selected_month, acc_val, emg_val, used_total, carry_cash])
+                                summary_sheet.append_row(["Month", "Accumulated", "Emergency", "Used", "Carry_Cash", "Personal_Income"])
+
+                            # เพิ่มตัวแปร personal_inc ไว้ท้ายสุด เพื่อให้บันทึกลงคอลัมน์ F (คอลัมน์ที่ 6)
+                            summary_sheet.append_row([selected_month, acc_val, emg_val, used_total, carry_cash, personal_inc])
 
                             # 3. ขึ้นเดือนใหม่ (แก้ไขเพื่อรักษาสูตร B24 และส่งยอดไป F4)
                             spreadsheet.duplicate_sheet(source_sheet_id=prev_sheet.id, new_sheet_name=next_month_name)
@@ -93,20 +95,21 @@ try:
                                 {'range': 'F2', 'values': [[0]]},   # รีเซ็ตเงินที่รับจากบ้านเป็น 0
                                 {'range': 'B11', 'values': [[0]]},  # รีเซ็ตเงินสดในมือ
                                 {'range': 'B12', 'values': [[0]]},  # รีเซ็ตเงินโอน
-                                {'range': 'F4', 'values': [[carry_cash]]} # นำเงินเหลือจากเดือนเก่ามาหยอดใส่ช่อง F4 ตรงนี้แทน
+                                {'range': 'F4', 'values': [[carry_cash]]}, # นำเงินเหลือมาใส่ F4
+                                {'range': 'F16', 'values': [[0]]}   # รีเซ็ตช่องรายได้ส่วนตัวเป็น 0
                             ]
                             new_sheet.batch_update(updates)
 
-                            
                             if len(prev_data) >= 28:
                                 new_sheet.delete_rows(28, len(prev_data))
-                            
+
                             st.success(f"✅ บันทึกสถิติและขึ้นเดือนใหม่สำเร็จ!")
                             st.query_params["month"] = next_month_name
                             st.rerun()
-                            
+
                         except Exception as e:
                             st.error(f"❌ เกิดข้อผิดพลาด: {e}")
+
     # =====================================================================
 
 except Exception as e:
@@ -437,6 +440,45 @@ with st.expander("📊 สัดส่วนและกราฟสรุปร
             color_discrete_map=pie_colors # สั่งให้ใช้สีตามที่กำหนด
         )
         st.plotly_chart(fig_pie, use_container_width=True)
+        
+        st.markdown("---")
+        st.markdown("**💼 สถิติรายได้ส่วนตัวรายเดือน**")
+
+       income_records = []
+       try:
+           sum_sheet = spreadsheet.worksheet("Summary_Data")
+           sum_data = sum_sheet.get_all_values()
+           if len(sum_data) > 1:
+               for row in sum_data[1:]:
+                   val_income = float(row[3].replace(',', '')) if len(row) > 3 and row[3] else 0.0
+                   income_records.append({"เดือน": row[0], "รายได้ส่วนตัว": val_income})
+       except Exception:
+           pass
+
+       live_income = val(16, 6)
+       if not any(r["เดือน"] == selected_month for r in income_records):
+           income_records.append({"เดือน": selected_month, "รายได้ส่วนตัว": live_income})
+       else:
+           for r in income_records:
+               if r["เดือน"] == selected_month:
+                   r["รายได้ส่วนตัว"] = live_income
+
+       df_income = pd.DataFrame(income_records)
+
+       if not df_income.empty:
+           max_y_axis = df_income["รายได้ส่วนตัว"].max() * 1.2 if df_income["รายalth"].max() > 0 else 5000
+           fig_inc = px.line(
+               df_income,
+               x="เดือน",
+               y="รายได้ส่วนตัว",
+               markers=True,
+               range_y=[0, max_y_axis],
+               color_discrete_sequence=["#FF9F1C"]
+           )
+           fig_inc.update_traces(fill='tozeroy', fillcolor='rgba(255, 159, 28, 0.2)')
+           fig_inc.update_layout(xaxis_title=None, height=400, margin=dict(l=20, r=20, t=30, b=20))
+           st.plotly_chart(fig_inc, use_container_width=True)
+
 
         st.markdown("---")
 
