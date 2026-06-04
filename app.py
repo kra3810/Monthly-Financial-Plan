@@ -441,7 +441,7 @@ with st.expander("📊 สัดส่วนและกราฟสรุปร
         )
         st.plotly_chart(fig_pie, use_container_width=True)
         
-          st.markdown("---")
+        st.markdown("---")
         st.markdown("**💼 สถิติรายได้ส่วนตัวรายเดือน**")
 
         income_records = []
