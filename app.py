@@ -218,7 +218,7 @@ with st.sidebar:
     # ดึงค่าจากช่อง F16
     current_personal_income = val(16, 6) 
     personal_income_input = st.sidebar.number_input(
-        "บันทึกรายได้ส่วนตัวเดือนนี้ (บาท)", 
+        "บันทึกรายได้ส่วนตัวเดือนนี้ (฿)", 
         min_value=0.0, 
         value=float(current_personal_income if current_personal_income else 0.0), 
         step=100.0
@@ -228,6 +228,7 @@ with st.sidebar:
         cell_update(16, 6, personal_income_input)
         st.sidebar.success("บันทึกรายได้ส่วนตัวเรียบร้อยแล้ว!")
         st.rerun()
+
 
     # --- หมวดหมู่ใหม่: รายได้ส่วนตัว ---
         st.sidebar.markdown("---")
