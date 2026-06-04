@@ -449,15 +449,23 @@ with st.expander("📊 สัดส่วนและกราฟสรุปร
             sum_sheet = spreadsheet.worksheet("Summary_Data")
             sum_data = sum_sheet.get_all_values()
             if len(sum_data) > 1:
+                start_tracking = False
                 for row in sum_data[1:]:
-                    val_income = float(row[5].replace(',', '')) if len(row) > 5 and row[5] else 0.0
-                    income_records.append({"เดือน": row[0], "รายได้ส่วนตัว": val_income})
+                    # เริ่มเก็บประวัติเพื่อวาดกราฟตั้งแต่เดือนมิถุนายนเป็นต้นไป
+                    if "มิ.ย." in row[0] or "มิถุนายน" in row[0]:
+                        start_tracking = True
+                    
+                    if start_tracking:
+                        val_income = float(row[5].replace(',', '')) if len(row) > 5 and row[5] else 0.0
+                        income_records.append({"เดือน": row[0], "รายได้ส่วนตัว": val_income})
         except Exception:
             pass
 
         live_income = val(16, 6)
         if not any(r["เดือน"] == selected_month for r in income_records):
-            income_records.append({"เดือน": selected_month, "รายได้ส่วนตัว": live_income})
+            # ป้องกันไม่ให้เพิ่มเดือนลงในกราฟ หากกดกลับไปดูเดือนที่เก่ากว่ามิถุนา
+            if "มิ.ย." in selected_month or "มิถุนายน" in selected_month or len(income_records) > 0:
+                income_records.append({"เดือน": selected_month, "รายได้ส่วนตัว": live_income})
         else:
             for r in income_records:
                 if r["เดือน"] == selected_month:
@@ -478,8 +486,6 @@ with st.expander("📊 สัดส่วนและกราฟสรุปร
             fig_inc.update_traces(fill='tozeroy', fillcolor='rgba(255, 159, 28, 0.2)')
             fig_inc.update_layout(xaxis_title=None, height=400, margin=dict(l=20, r=20, t=30, b=20))
             st.plotly_chart(fig_inc, use_container_width=True)
-
-
 
         st.markdown("---")
 
