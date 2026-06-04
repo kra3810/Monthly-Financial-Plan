@@ -211,23 +211,27 @@ with st.sidebar:
     st.text_input("เงินสะสม (พิมพ์สมการแล้วกด Enter)", key=a_key, on_change=auto_update, args=(a_key, 'B18'))
     st.text_input("เงินสำรองฉุกเฉิน (พิมพ์สมการแล้วกด Enter)", key=e_key, on_change=auto_update, args=(e_key, 'B13'))
     
-    # --- หมวดหมู่ใหม่: รายได้ส่วนตัว ---
-    st.sidebar.markdown("---")
-    st.sidebar.markdown("💼 **รายได้ส่วนตัว (Personal Income)**")
-        
-    # ดึงค่าจากช่อง F16
-    current_personal_income = val(16, 6) 
-    personal_income_input = st.sidebar.number_input(
-        "บันทึกรายได้ส่วนตัวเดือนนี้ (฿)", 
-        min_value=0.0, 
-        value=float(current_personal_income if current_personal_income else 0.0), 
-        step=100.0
-    )
+    st.markdown("---")
+    # กราฟเส้น: สถิติและเป้าหมายรายได้ส่วนตัว
+    with st.expander("💼 สถิติและเป้าหมายรายได้ส่วนตัว (คลิกเพื่อเปิด/ปิด)"):
+            
+        # --- ส่วนที่ 1: ตั้งค่าเกณฑ์เป้าหมายรายได้ (ค่าสมมุติชั่วคราว) ---
+        target_low = 1000   # ขั้นต่ำ
+        target_med = 3000   # ปานกลาง
+        target_high = 5000  # เป้าหมายสูงสุด
 
-    if st.sidebar.button("บันทึกรายได้ส่วนตัว"):
-        cell_update(16, 6, personal_income_input)
-        st.sidebar.success("บันทึกรายได้ส่วนตัวเรียบร้อยแล้ว!")
-        st.rerun()
+        # --- ส่วนที่ 2: ดึงประวัติจาก Summary_Data ---
+        income_records = []
+        try:
+            sum_sheet = spreadsheet.worksheet("Summary_Data")
+            sum_data = sum_sheet.get_all_values()
+            if len(sum_data) > 1:
+                for row in sum_data[1:]:
+                    # (รอข้อมูลคอลัมน์จริง) สมมุติชั่วคราวว่าเก็บที่คอลัมน์ที่ 4 (Index 3 / ช่อง D)
+                    val_income = float(row[3].replace(',', '')) if len(row) > 3 and row[3] else 0.0
+                    income_records.append({"เดือน": row[0], "รายได้ส่วนตัว": val_income})
+        except Exception:
+            pass
 
 
     # --- หมวดหมู่ใหม่: รายได้ส่วนตัว ---
