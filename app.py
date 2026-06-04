@@ -215,19 +215,25 @@ with st.sidebar:
     st.sidebar.markdown("---")
     st.sidebar.markdown("💼 **รายได้ส่วนตัว (Personal Income)**")
         
-    # ดึงค่าจากช่อง F16
+    # ดึงค่าปัจจุบัน
     current_personal_income = val(16, 6) 
-    personal_income_input = st.sidebar.number_input(
-        "บันทึกรายได้ส่วนตัวเดือนนี้ (฿)", 
-        min_value=0.0, 
-        value=float(current_personal_income if current_personal_income else 0.0), 
-        step=100.0
+        
+    # เปลี่ยนเป็นช่องพิมพ์ข้อความ/สมการ
+    personal_income_input = st.sidebar.text_input(
+        "รายได้ส่วนตัว (พิมพ์สมการแล้วกด Enter)", 
+        value=str(current_personal_income) if current_personal_income else "0"
     )
 
-    if st.sidebar.button("บันทึกรายได้ส่วนตัว"):
-        cell_update(16, 6, personal_income_input)
-        st.sidebar.success("บันทึกรายได้ส่วนตัวเรียบร้อยแล้ว!")
-        st.rerun()
+    # ระบบคำนวณและบันทึกอัตโนมัติเมื่อกด Enter
+    try:
+        new_income_val = eval(str(personal_income_input))
+        old_income_val = float(current_personal_income) if current_personal_income else 0.0
+            
+        if new_income_val != old_income_val:
+            cell_update(16, 6, new_income_val)
+            st.rerun()
+    except Exception:
+        pass  # กรณีพิมพ์สมการยังไม่เสร็จหรือผิดพลาด ให้ระบบข้ามไปก่อน
 
     st.markdown("---")
     with st.expander("รายการตายตัวและเงินเก็บ (Fixed & Saving)"):
