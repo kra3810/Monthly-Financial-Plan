@@ -56,7 +56,7 @@ try:
             next_month_name = f"{thai_months[next_m_num]} {next_y_num}"
             
             if next_month_name not in month_list:
-                                if st.button(f"➕ ปิดยอดและขึ้นเดือนใหม่ ({next_month_name})", use_container_width=True):
+                if st.button(f"➕ ปิดยอดและขึ้นเดือนใหม่ ({next_month_name})", use_container_width=True):
                     with st.spinner(f"กำลังสรุปยอดและสร้างเดือนใหม่..."):
                         try:
                             prev_sheet = spreadsheet.worksheet(selected_month)
