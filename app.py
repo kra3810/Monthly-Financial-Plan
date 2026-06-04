@@ -211,7 +211,41 @@ with st.sidebar:
     st.text_input("เงินสะสม (พิมพ์สมการแล้วกด Enter)", key=a_key, on_change=auto_update, args=(a_key, 'B18'))
     st.text_input("เงินสำรองฉุกเฉิน (พิมพ์สมการแล้วกด Enter)", key=e_key, on_change=auto_update, args=(e_key, 'B13'))
     
-    st.markdown("---")
+    # --- หมวดหมู่ใหม่: รายได้ส่วนตัว ---
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("💼 **รายได้ส่วนตัว (Personal Income)**")
+        
+        # ดึงค่าจากช่อง F16
+        current_personal_income = val(16, 6) 
+        personal_income_input = st.sidebar.number_input(
+            "บันทึกรายได้ส่วนตัวเดือนนี้ (บาท)", 
+            min_value=0.0, 
+            value=float(current_personal_income if current_personal_income else 0.0), 
+            step=100.0
+        )
+
+        if st.sidebar.button("บันทึกรายได้ส่วนตัว"):
+            cell_update(16, 6, personal_income_input)
+            st.sidebar.success("บันทึกรายได้ส่วนตัวเรียบร้อยแล้ว!")
+            st.rerun()
+
+    # --- หมวดหมู่ใหม่: รายได้ส่วนตัว ---
+        st.sidebar.markdown("---")
+        st.sidebar.markdown("💼 **รายได้ส่วนตัว (Personal Income)**")
+        
+        # ดึงค่าจากช่อง F16
+        current_personal_income = val(16, 6) 
+        personal_income_input = st.sidebar.number_input(
+            "บันทึกรายได้ส่วนตัวเดือนนี้ (บาท)", 
+            min_value=0.0, 
+            value=float(current_personal_income if current_personal_income else 0.0), 
+            step=100.0
+        )
+
+        if st.sidebar.button("บันทึกรายได้ส่วนตัว"):
+            cell_update(16, 6, personal_income_input)
+            st.sidebar.success("บันทึกรายได้ส่วนตัวเรียบร้อยแล้ว!")
+            st.rerun()
     
     with st.expander("รายการตายตัวและเงินเก็บ (Fixed & Saving)"):
         st.write(f"- เงินเก็บสำรองฉุกเฉิน: {budget_emergency:,.0f} ฿")
