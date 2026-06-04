@@ -233,25 +233,7 @@ with st.sidebar:
         except Exception:
             pass
 
-
-    # --- หมวดหมู่ใหม่: รายได้ส่วนตัว ---
-        st.sidebar.markdown("---")
-        st.sidebar.markdown("💼 **รายได้ส่วนตัว (Personal Income)**")
-        
-        # ดึงค่าจากช่อง F16
-        current_personal_income = val(16, 6) 
-        personal_income_input = st.sidebar.number_input(
-            "บันทึกรายได้ส่วนตัวเดือนนี้ (บาท)", 
-            min_value=0.0, 
-            value=float(current_personal_income if current_personal_income else 0.0), 
-            step=100.0
-        )
-
-        if st.sidebar.button("บันทึกรายได้ส่วนตัว"):
-            cell_update(16, 6, personal_income_input)
-            st.sidebar.success("บันทึกรายได้ส่วนตัวเรียบร้อยแล้ว!")
-            st.rerun()
-    
+    st.markdown("---")
     with st.expander("รายการตายตัวและเงินเก็บ (Fixed & Saving)"):
         st.write(f"- เงินเก็บสำรองฉุกเฉิน: {budget_emergency:,.0f} ฿")
         st.write("- ค่าหอพัก: 4,500 ฿")
