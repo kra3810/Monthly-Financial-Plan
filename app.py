@@ -96,7 +96,8 @@ try:
                                 {'range': 'B11', 'values': [[0]]},  # รีเซ็ตเงินสดในมือ
                                 {'range': 'B12', 'values': [[0]]},  # รีเซ็ตเงินโอน
                                 {'range': 'F4', 'values': [[carry_cash]]}, # นำเงินเหลือมาใส่ F4
-                                {'range': 'F16', 'values': [[0]]}   # รีเซ็ตช่องรายได้ส่วนตัวเป็น 0
+                                {'range': 'F16', 'values': [[0]]},   # รีเซ็ตช่องรายได้ส่วนตัวเป็น 0
+                                {'range': 'C26', 'values': [['']]}
                             ]
                             new_sheet.batch_update(updates)
 
