@@ -197,6 +197,31 @@ def auto_update(key, cell):
         st.toast(f"❌ รูปแบบสมการไม่ถูกต้อง หรือมีตัวอักษรปนอยู่")
         print(f"auto_update error ({key}): {e}")
 
+def emergency_update_func(key, current_b13_val):
+    try:
+        raw_str = str(st.session_state[key])
+        total_val = safe_eval(raw_str) # ยอดสะสมรวมทั้งหมด
+
+        # ดึงเฉพาะตัวเลขหลังเครื่องหมาย + (ค่าที่คุณกรอกจริงในเดือนนี้)
+        if '+' in raw_str:
+            added_val = safe_eval(raw_str.split('+')[-1])
+        else:
+            # กรณีพิมพ์ตัวเลขทับไปตรงๆ ให้เอา (ยอดใหม่ - ยอดเดิม)
+            added_val = total_val - float(current_b13_val)
+
+        # ยิงข้อมูล 2 ช่องพร้อมกัน: B13 (ยอดสะสมรวม) และ C26 (ยอดของเดือนนี้)
+        updates = [
+            {'range': 'B13', 'values': [[total_val]]},
+            {'range': 'C26', 'values': [[added_val]]}
+        ]
+        sheet.batch_update(updates)
+
+        st.session_state[key] = str(total_val)
+        st.toast(f"✅ บันทึกยอดรวมลง B13 และยอดที่เพิ่ม ({added_val}) ลง C26 เรียบร้อย!")
+    except Exception as e:
+        st.toast(f"❌ รูปแบบไม่ถูกต้อง")
+        print(f"emg_update error: {e}")
+
 # --- 2. แถบข้าง (Sidebar) ---
 with st.sidebar:
     st.title("⚙️ การตั้งค่าคงที่")
@@ -212,7 +237,7 @@ with st.sidebar:
         
     st.text_input("รับเงินจากบ้าน (พิมพ์สมการแล้วกด Enter)", key=m_key, on_change=auto_update, args=(m_key, 'F2'))
     st.text_input("เงินสะสม (พิมพ์สมการแล้วกด Enter)", key=a_key, on_change=auto_update, args=(a_key, 'B18'))
-    st.text_input("เงินสำรองฉุกเฉิน (พิมพ์สมการแล้วกด Enter)", key=e_key, on_change=auto_update, args=(e_key, 'B13'))
+    st.text_input("เงินสำรองฉุกเฉิน (พิมพ์สมการแล้วกด Enter)", key=e_key, on_change=emergency_update_func, args=(e_key, sep_emergency))
     
     # --- หมวดหมู่ใหม่: รายได้ส่วนตัว ---
     st.sidebar.markdown("---")
