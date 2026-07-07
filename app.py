@@ -10,7 +10,6 @@ import plotly.graph_objects as go
 
 st.set_page_config(page_title="Kla Finance v1.0", layout="centered")
 
-@st.cache_data(ttl=600)
 def get_gspread_client():
     credentials_dict = st.secrets["gcp_service_account"]
     scopes = ["https://www.googleapis.com/auth/spreadsheets", "https://www.googleapis.com/auth/drive"]
