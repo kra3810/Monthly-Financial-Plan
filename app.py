@@ -100,8 +100,15 @@ try:
                             new_sheet.batch_update(updates)
 
                             # เปลี่ยนมาเริ่มลบข้อมูลเก่าตั้งแต่แถวที่ 30 ลงไป เพื่อรักษาหัวตารางประวัติในแถว 29 ไว้
+                            # เปลี่ยนจากลบแถว เป็นการล้างเฉพาะค่าข้อมูล เพื่อรักษา Dropdown และฟอร์แมตไว้
                             if len(prev_data) >= 30:
-                                new_sheet.delete_rows(30, len(prev_data))
+                                range_to_clear = f"A30:D{len(prev_data)}"
+                                new_sheet.batch_clear([range_to_clear])
+                            
+                            # เพิ่มคำสั่งนี้ต่อท้าย เพื่อบังคับให้เดือนใหม่มีแถวสแตนด์บายรอไว้อย่างน้อย 100 แถวเสมอ
+                            current_rows = new_sheet.row_count
+                            if current_rows < 100:
+                                new_sheet.add_rows(100 - current_rows)
 
                             st.success(f"✅ บันทึกสถิติและขึ้นเดือนใหม่สำเร็จ!")
                             st.query_params["month"] = next_month_name
