@@ -365,7 +365,7 @@ if st.button("บันทึกข้อมูล", use_container_width=True):
     if food_in > 0 or pers_in > 0 or oth_in > 0:
         try:
             final_note = note.strip() if note.strip() else "-"
-            time_stamp = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
+            time_stamp = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
             
             # เตรียมโครงสร้างข้อมูลแถวใหม่แบบ 4 คอลัมน์ [วันเวลา, จำนวนเงิน, หมวดหมู่, หมายเหตุ]
             new_rows = []
