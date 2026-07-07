@@ -361,7 +361,7 @@ oth_color  = "green" if (budget_other - used_other) >= 0 else "red"
 # --- จัดการรายจ่าย (รอดำเนินการ + บันทึกเพิ่ม) แบบรวมปุ่มเดียว ---
 st.subheader("📝 จัดการรายจ่ายประจำเดือน")
 
-# --- 1. เตรียมข้อมูลรายการ (แก้ไขให้ตรงกับโครงสร้างจริง) ---
+# --- 1. เตรียมข้อมูลรายการ (กรองเฉพาะ "รอดำเนินการ") ---
 pending_items_to_save = [] 
 transactions = []
 
@@ -369,13 +369,13 @@ transactions = []
 if len(data) >= 30:
     for i in range(29, len(data)):
         row = data[i]
-        # เช็คว่ามีข้อมูลวันที่จริง (คอลัมน์ A หรือ index 0) เพื่อป้องกันแถวว่าง
-        if row[0]: 
+        # เพิ่มเงื่อนไข: ต้องมีวันที่ และ หมวดหมู่ต้องเป็น "รอดำเนินการ" เท่านั้น
+        if row[0] and (row[2] == "รอดำเนินการ"): 
             transactions.append({
-                "sheet_row": i + 1, # Google Sheets นับแถวที่ 1, 2...
+                "sheet_row": i + 1,
                 "วันที่": row[0],
                 "จำนวนเงิน": float(str(row[1]).replace(',', '')) if row[1] else 0.0,
-                "หมวดหมู่": row[2] if len(row) > 2 else "รอดำเนินการ",
+                "หมวดหมู่": row[2],
                 "หมายเหตุ": row[3] if len(row) > 3 else "-"
             })
 
@@ -391,35 +391,22 @@ if transactions:
         with col3:
             new_note = st.text_input("หมายเหตุ", value=t.get('หมายเหตุ', ''), key=f"note_{idx}", label_visibility="collapsed")
         with col4:
+            # Dropdown ให้เลือกเปลี่ยนจาก "รอดำเนินการ" เป็นอย่างอื่น
             cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
-            current_cat = t.get("หมวดหมู่", "รอดำเนินการ")
-            if current_cat not in cat_options: current_cat = "รอดำเนินการ"
-            new_cat = st.selectbox("หมวดหมู่", options=cat_options, index=cat_options.index(current_cat), key=f"cat_{idx}", label_visibility="collapsed")
+            new_cat = st.selectbox("หมวดหมู่", options=cat_options, index=0, key=f"cat_{idx}", label_visibility="collapsed")
 
-        # Logic บันทึกข้อมูล
-        if new_cat == "แยกบิล":
-            pending_items_to_save.append({
-                "sheet_row": t["sheet_row"],
-                "is_split": True,
-                "edit_amt": t["จำนวนเงิน"],
-                "edit_cat": new_cat,
-                "edit_note": new_note
-            })
-        else:
-            pending_items_to_save.append({
-                "sheet_row": t["sheet_row"],
-                "is_split": False,
-                "edit_amt": t["จำนวนเงิน"],
-                "edit_cat": new_cat,
-                "edit_note": new_note
-            })
+        # เก็บค่าเพื่อรอเซฟ
+        pending_items_to_save.append({
+            "sheet_row": t["sheet_row"],
+            "is_split": (new_cat == "แยกบิล"),
+            "edit_amt": t["จำนวนเงิน"],
+            "edit_cat": new_cat,
+            "edit_note": new_note
+        })
             
         st.markdown("<div style='margin-bottom: 10px; border-bottom: 1px solid #f0f2f6;'></div>", unsafe_allow_html=True)
 else:
     st.success("🎉 ไม่มีรายการรอดำเนินการค้างอยู่")
-
-
-
 
 st.write("")
 
