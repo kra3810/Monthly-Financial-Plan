@@ -380,53 +380,56 @@ if len(data) >= 30:
 pending_items_to_save = []
 
 if transactions:
-    st.markdown("**1. รายการรอดำเนินการ** (เลือกหมวดหมู่ได้ปกติ หรือแก้ไขจำนวนเงินได้ทันทีหากเป็นบิลที่ปนกัน)")
+    st.markdown("**1. รายการรอดำเนินการ** (เลือกหมวดหมู่ได้ปกติ หรือระบุแยกยอดเงินเมื่อเลือก 'แยกบิล')")
     
-    # ส่วนหัวคอลัมน์แบบเรียบง่าย
-    hcol1, hcol2, hcol3, hcol4 = st.columns([1.5, 1.5, 2.5, 2.5])
-    with hcol1: st.caption("📅 วันที่")
-    with hcol2: st.caption("💰 จำนวนเงิน (฿)")
-    with hcol3: st.caption("📝 หมายเหตุ")
-    with hcol4: st.caption("🗂️ หมวดหมู่")
-    
-    # แสดงแถวรายการรอดำเนินการแบบคลีน ไม่ใช้กล่องหนา
+    # แสดงแถวรายการรอดำเนินการแบบคลีนและโมเดิร์น
     for idx, t in enumerate(transactions):
-        col1, col2, col3, col4 = st.columns([1.5, 1.5, 2.5, 2.5])
+        col1, col2 = st.columns([5, 2])
         with col1:
-            st.write(t["วันที่"])
+            st.markdown(f"📅 **{t['วันที่']}** &nbsp;&nbsp;|&nbsp;&nbsp; 💰 **{t['จำนวนเงิน']:,.2f} ฿** &nbsp;&nbsp;|&nbsp;&nbsp; 📝 {t['หมายเหตุ']}")
         with col2:
-            # แก้ไขตัวเลขจำนวนเงินในบรรทัดได้เลยหากเป็นบิลที่ปนกัน
-            edit_amt = st.number_input("เงิน", min_value=0.0, value=t["จำนวนเงิน"], step=1.0, key=f"amt_{idx}", label_visibility="collapsed")
-        with col3:
-            edit_note = st.text_input("หมายเหตุ", value=t["หมายเหตุ"], key=f"note_{idx}", label_visibility="collapsed")
-        with col4:
-            # Dropdown เลือกหมวดหมู่ปกติ
-            cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ"]
+            cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "🔀 แยกบิล (ปนกัน)"]
             current_idx = cat_options.index(t["หมวดหมู่"]) if t["หมวดหมู่"] in cat_options else 0
-            edit_cat = st.selectbox("หมวดหมู่", options=cat_options, index=current_idx, key=f"cat_{idx}", label_visibility="collapsed")
+            edit_cat = st.selectbox(f"หมวดหมู่_{idx}", options=cat_options, index=current_idx, key=f"cat_{idx}", label_visibility="collapsed")
         
-        pending_items_to_save.append({
-            "sheet_row": t["sheet_row"],
-            "orig_amt": t["จำนวนเงิน"],
-            "orig_cat": t["หมวดหมู่"],
-            "orig_note": t["หมายเหตุ"],
-            "edit_amt": edit_amt,
-            "edit_cat": edit_cat,
-            "edit_note": edit_note
-        })
+        # กางช่องให้แก้ไขจำนวนเงินเฉพาะรายการที่เลือก "แยกบิล (ปนกัน)" เท่านั้น
+        if edit_cat == "🔀 แยกบิล (ปนกัน)":
+            st.caption(f"💡 ยอดเต็ม {t['จำนวนเงิน']:,.2f} ฿: ระบุจำนวนเงินของหมวดแรกตรงนี้ ส่วนยอดที่เหลือของบิลนี้ให้ไปพิมพ์เพิ่มในฟอร์มด้านล่างก่อนเซฟ")
+            sc1, sc2, sc3 = st.columns([2, 3, 2])
+            with sc1:
+                edit_amt = st.number_input("จำนวนเงินหมวดแรก", min_value=0.0, max_value=t["จำนวนเงิน"], value=t["จำนวนเงิน"], step=1.0, key=f"amt_{idx}")
+            with sc2:
+                actual_cat = st.selectbox("หมวดหมู่ของยอดนี้", ["ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ"], key=f"act_cat_{idx}")
+            with sc3:
+                edit_note = st.text_input("แก้ไขหมายเหตุ", value=t["หมายเหตุ"], key=f"note_{idx}")
+            
+            pending_items_to_save.append({
+                "sheet_row": t["sheet_row"],
+                "is_split": True,
+                "edit_amt": edit_amt,
+                "edit_cat": actual_cat,
+                "edit_note": edit_note
+            })
+        else:
+            pending_items_to_save.append({
+                "sheet_row": t["sheet_row"],
+                "is_split": False,
+                "edit_amt": t["จำนวนเงิน"],
+                "edit_cat": edit_cat,
+                "edit_note": t["หมายเหตุ"]
+            })
+        st.markdown("<div style='margin-bottom: 10px; border-bottom: 1px solid #f0f2f6;'></div>", unsafe_allow_html=True)
 else:
     st.success("🎉 ไม่มีรายการรอดำเนินการค้างอยู่")
 
 st.write("")
 
-# 2. ฟอร์มบันทึกเพิ่ม (Manual Input) พับเก็บใน st.expander วางต่อท้ายถัดจากรายการรอดำเนินการทันที
+# 2. ฟอร์มบันทึกเพิ่ม (ดึงโค้ดเดิมของคุณกลับมาใช้เป๊ะๆ ตามสั่ง) พับเก็บใน st.expander ต่อท้ายรายการรอดำเนินการทันที
 with st.expander("➕ บันทึกรายจ่ายใหม่แบบกรอกเอง (Manual Input)"):
-    col_f, col_p, col_o = st.columns(3)
-    with col_f: food_in = st.number_input(f"🍔 ค่ากิน - :{food_color}[{food_remain_text}]", min_value=0.0, step=1.0, key="man_food")
-    with col_p: pers_in = st.number_input(f"🛍️ ใช้ส่วนตัว - :{pers_color}[{pers_remain_text}]", min_value=0.0, step=1.0, key="man_pers")
-    with col_o: oth_in  = st.number_input(f"📦 อื่นๆ - :{oth_color}[{oth_remain_text}]", min_value=0.0, step=1.0, key="man_oth")
-    
-    manual_note = st.text_input("หมายเหตุ (หากไม่ใส่ ระบบจะบันทึกเป็น '-')", key="man_note")
+    food_in = st.number_input(f"ค่ากิน - :{food_color}[{food_remain_text}]", min_value=0.0, step=1.0)
+    pers_in = st.number_input(f"ใช้ส่วนตัว - :{pers_color}[{pers_remain_text}]", min_value=0.0, step=1.0)
+    oth_in  = st.number_input(f"อื่นๆ - :{oth_color}[{oth_remain_text}]", min_value=0.0, step=1.0)
+    note = st.text_input("หมายเหตุ (หากไม่ใส่ ระบบจะบันทึกเป็น '-')")
 
 st.write("")
 
@@ -437,16 +440,16 @@ if st.button("💾 บันทึกข้อมูลทั้งหมด", t
     
     # ตรวจสอบการอัปเดตรายการรอดำเนินการ
     for item in pending_items_to_save:
-        if item["edit_cat"] != item["orig_cat"] or float(item["edit_amt"]) != float(item["orig_amt"]) or item["edit_note"] != item["orig_note"]:
+        if item["is_split"] or item["edit_cat"] != "รอดำเนินการ":
             row_num = item["sheet_row"]
             batch_updates.append({
                 'range': f'B{row_num}:D{row_num}',
                 'values': [[item["edit_amt"], item["edit_cat"], item["edit_note"]]]
             })
             
-    # ตรวจสอบการกรอกข้อมูลเพิ่มจากฟอร์ม Manual
+    # ตรวจสอบการกรอกข้อมูลเพิ่มจากฟอร์ม Manual (ใช้ตัวแปรตามโค้ดเดิมของคุณ)
     if food_in > 0 or pers_in > 0 or oth_in > 0:
-        final_note = manual_note.strip() if manual_note.strip() else "-"
+        final_note = note.strip() if note.strip() else "-"
         time_stamp = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
         if food_in > 0: new_rows.append([time_stamp, food_in, "ค่ากิน", final_note])
         if pers_in > 0: new_rows.append([time_stamp, pers_in, "ค่าใช้จ่ายส่วนตัว", final_note])
