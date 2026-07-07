@@ -394,13 +394,22 @@ if transactions:
             current_cat = t.get("หมวดหมู่", "รอดำเนินการ")
             
             # ใช้ popover เพื่อให้หน้าตาสะอาด (แสดงแค่ชื่อหมวดหมู่ปัจจุบัน)
+                        # ใช้ popover เพื่อให้หน้าตาดูสะอาด
             with st.popover(current_cat):
-                # ใช้ radio หรือ selectbox ไว้ข้างใน popover
+                cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
+                
+                # ตรวจสอบ index เพื่อป้องกัน Error กรณีค่า cat ไม่ตรงกับ list
+                current_idx = cat_options.index(current_cat) if current_cat in cat_options else 0
+                
+                # เพิ่ม key เข้าไปตรงนี้ครับ!
                 new_cat = st.radio(
                     "เลือกหมวดหมู่",
-                    ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"],
-                    index=["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"].index(current_cat)
+                    cat_options,
+                    index=current_idx,
+                    key=f"radio_cat_{idx}",  # <--- ใส่ Key ตรงนี้
+                    label_visibility="collapsed"
                 )
+
 
 
 
