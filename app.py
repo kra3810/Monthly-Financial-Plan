@@ -393,19 +393,41 @@ if transactions:
 
         with col4:
             radio_key = f"radio_{idx}"
+            # หมวดหมู่ทั้งหมด
             cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
             
-            # ดึงค่าปัจจุบัน
-            current_cat = st.session_state.get(radio_key, t.get("หมวดหมู่", "รอดำเนินการ"))
+            # ค่าปัจจุบัน
+            current_val = st.session_state.get(radio_key, t.get("หมวดหมู่", "รอดำเนินการ"))
             
-            # Popover ตัวเดียวจบ ไม่รกตาราง
-            with st.popover(current_cat):
-                new_cat = st.radio(
-                    "เลือกหมวดหมู่", 
-                    cat_options, 
-                    index=cat_options.index(current_cat) if current_cat in cat_options else 0, 
-                    key=radio_key
-                )
+            # Popover สำหรับเลือกหมวด
+            with st.popover(current_val):
+                new_cat = st.radio("เลือกหมวดหมู่", cat_options, index=cat_options.index(current_val) if current_val in cat_options else 0, key=radio_key)
+
+            # --- ถ้าแยกบิล ให้แสดงช่องกรอกที่นี่เลย ---
+            if new_cat == "แยกบิล":
+                # แยกให้กรอก 2 ช่องแบบสั้นๆ (ใช้ session_state จำค่า)
+                # ผมใช้ key ที่ผูกกับ idx เพื่อให้แต่ละแถวไม่ตีกัน
+                st.write("ระบุยอดแยก:")
+                st.number_input("จำนวนเงินส่วนที่ 1", key=f"s1_{idx}", label_visibility="collapsed")
+                st.number_input("จำนวนเงินส่วนที่ 2", key=f"s2_{idx}", label_visibility="collapsed")
+
+        # เคลียร์ตัวแปรให้พร้อม
+        split_data = None
+        if new_cat == "แยกบิล":
+            # ดึงค่าจากช่องกรอกที่เพิ่งสร้าง
+            split_data = {
+                "amt1": st.session_state.get(f"s1_{idx}", 0),
+                "amt2": st.session_state.get(f"s2_{idx}", 0)
+            }
+
+        pending_items_to_save.append({
+            "sheet_row": t["sheet_row"],
+            "edit_amt": t["จำนวนเงิน"],
+            "edit_cat": new_cat,
+            "split_data": split_data  # เก็บข้อมูลการแยกบิลไปด้วย
+        })
+
+
                 
                 # ถ้าเลือกแยกบิล ให้แสดงช่องกรอกข้างในป๊อปอัพ
                 # --- ก่อนบรรทัด append ให้ใส่แบบนี้ ---
