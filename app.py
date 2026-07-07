@@ -392,22 +392,26 @@ if transactions:
             new_note = st.text_input("หมายเหตุ", value=t.get('หมายเหตุ', ''), key=f"note_{idx}", label_visibility="collapsed")
 
         with col4:
-            radio_key = f"radio_{idx}"
-            cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
-            
-            # ดึงค่าจาก Session
-            current_cat = st.session_state.get(radio_key, t.get("หมวดหมู่", "รอดำเนินการ"))
+            # เลือกหมวดหมู่
+            new_cat = st.selectbox(
+                "หมวดหมู่", 
+                ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"],
+                index=0, # ปรับตาม logic ค่าปัจจุบันของคุณ
+                key=f"cat_{idx}", 
+                label_visibility="collapsed"
+            )
 
-            # Popover เป็นจุดเดียวที่จัดการทุกอย่าง (ห้ามมีอะไรโผล่นอกเหนือจากนี้)
-            with st.popover(current_cat):
-                new_cat = st.radio("หมวดหมู่หลัก", cat_options, index=cat_options.index(current_cat) if current_cat in cat_options else 0, key=radio_key)
-                
-                # ถ้าเลือก "แยกบิล" ค่อยโชว์ส่วนเสริมเล็กๆ ไว้ข้างในนี้
-                if new_cat == "แยกบิล":
-                    st.divider()
-                    st.caption("ส่วนที่แยกออกมา:")
-                    split_cat = st.selectbox("หมวดหมู่ส่วนที่แยก", cat_options[:4], key=f"s_cat_{idx}")
-                    split_amt = st.number_input("จำนวนเงินที่แยก", min_value=0.0, key=f"s_amt_{idx}")
+            # ถ้าเลือกแยกบิล ให้แสดงช่องกรอก 3 อันข้างใต้ทันที
+            if new_cat == "แยกบิล":
+                st.caption("ระบุรายละเอียดการแยกบิล:")
+                s1, s2, s3 = st.columns(3)
+                with s1:
+                    st.text_input("ส่วนที่ 1", key=f"s1_{idx}", label_visibility="collapsed")
+                with s2:
+                    st.text_input("ส่วนที่ 2", key=f"s2_{idx}", label_visibility="collapsed")
+                with s3:
+                    st.text_input("ส่วนที่ 3", key=f"s3_{idx}", label_visibility="collapsed")
+
 
 
         # เก็บค่าเพื่อรอเซฟ (แก้ส่วนนี้ครับ)
