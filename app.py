@@ -392,36 +392,46 @@ if transactions:
             new_note = st.text_input("หมายเหตุ", value=t.get('หมายเหตุ', ''), key=f"note_{idx}", label_visibility="collapsed")
 
         with col4:
-            # สร้าง ID เฉพาะสำหรับแถวนี้เพื่อจำค่า
             radio_key = f"radio_{idx}"
-            
-            # 1. ดึงค่าล่าสุดจาก Session: ถ้ามีการเลือกแล้ว ให้ใช้ค่านั้น ถ้ายัง ให้ใช้ค่าจากตาราง
-            if radio_key in st.session_state:
-                current_cat = st.session_state[radio_key]
-            else:
-                current_cat = t.get("หมวดหมู่", "รอดำเนินการ")
-            
+            split_key = f"split_{idx}"
             cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
-            
-            # 2. popover แสดง label เป็น current_cat ที่อัปเดตตลอดเวลา
+
+            # ดึงค่าล่าสุด (เช็คจาก session_state ถ้าเคยเลือกไว้ ให้ใช้ค่านั้น ถ้าไม่เคย ใช้จาก Google Sheets)
+            current_cat = st.session_state.get(radio_key, t.get("หมวดหมู่", "รอดำเนินการ"))
+            if current_cat not in cat_options:
+                current_cat = "รอดำเนินการ"
+
+            # 1. Popover สำหรับเลือกหมวดหมู่
             with st.popover(current_cat):
-                # 3. Radio อ่านค่าจาก Session โดยตรงผ่าน key
                 new_cat = st.radio(
                     "เลือกหมวดหมู่",
                     cat_options,
-                    index=cat_options.index(current_cat) if current_cat in cat_options else 0,
-                    key=radio_key, 
+                    index=cat_options.index(current_cat),
+                    key=radio_key,
                     label_visibility="collapsed"
                 )
 
-        # เก็บค่าเพื่อรอเซฟ
+            # 2. ช่องกรอกแยกบิล (แสดงเฉพาะตอนเลือก "แยกบิล" และไม่มีปุ่มกด)
+            split_val = 1
+            if new_cat == "แยกบิล":
+                split_val = st.number_input(
+                    "จำนวนส่วน", 
+                    min_value=2, 
+                    value=2, 
+                    key=split_key,
+                    label_visibility="visible" # หรือ collapsed ถ้าอยากให้ประหยัดพื้นที่
+                )
+
+                # เก็บค่าเพื่อรอเซฟ
         pending_items_to_save.append({
             "sheet_row": t["sheet_row"],
             "is_split": (new_cat == "แยกบิล"),
             "edit_amt": t["จำนวนเงิน"],
             "edit_cat": new_cat,
-            "edit_note": new_note
+            "edit_note": new_note,
+            "split_val": st.session_state.get(f"split_{idx}", 1) if new_cat == "แยกบิล" else 1
         })
+
 
         st.markdown("<div style='margin-bottom: 10px; border-bottom: 1px solid #f0f2f6;'></div>", unsafe_allow_html=True)
 else:
