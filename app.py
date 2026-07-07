@@ -364,52 +364,32 @@ st.subheader("📝 จัดการรายจ่ายประจำเด�
 # 1. ดึงข้อมูลรายการรอดำเนินการมาจัดเป็นแถวรายการปกติ
 transactions = []
 if len(data) >= 30:
-    for i, row in enumerate(data[29:]):
-        while len(row) < 4: row.append("") 
-        if str(row[2]).strip() == "รอดำเนินการ":
-            try: amt = float(str(row[1]).replace(',', ''))
-            except: amt = 0.0
-            transactions.append({
-                "sheet_row": i + 30,
-                "วันที่": str(row[0]).strip(),
-                "จำนวนเงิน": amt,
-                "หมวดหมู่": str(row[2]).strip(),
-                "หมายเหตุ": str(row[3]).strip()
-            })
-
-pending_items_to_save = []
-
-if transactions:
-    st.markdown("**1. รายการรอดำเนินการ** (เลือกหมวดหมู่ได้ปกติ หรือระบุแยกยอดเงินเมื่อเลือก 'แยกบิล')")
-    
-    # แสดงแถวรายการรอดำเนินการแบบคลีนและโมเดิร์น
-    for idx, t in enumerate(transactions):
-        col1, col2 = st.columns([5, 2])
-        with col1:
-            st.markdown(f"📅 **{t['วันที่']}** &nbsp;&nbsp;|&nbsp;&nbsp; 💰 **{t['จำนวนเงิน']:,.2f} ฿** &nbsp;&nbsp;|&nbsp;&nbsp; 📝 {t['หมายเหตุ']}")
-        with col2:
-            cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "🔀 แยกบิล (ปนกัน)"]
-            current_idx = cat_options.index(t["หมวดหมู่"]) if t["หมวดหมู่"] in cat_options else 0
-            edit_cat = st.selectbox(f"หมวดหมู่_{idx}", options=cat_options, index=current_idx, key=f"cat_{idx}", label_visibility="collapsed")
+        for idx, t in enumerate(transactions):
+        col1, col2, col3, col4 = st.columns([1.5, 1, 2, 2])
         
-        # กางช่องให้แก้ไขจำนวนเงินเฉพาะรายการที่เลือก "แยกบิล (ปนกัน)" เท่านั้น
-        if edit_cat == "🔀 แยกบิล (ปนกัน)":
-            st.caption(f"💡 ยอดเต็ม {t['จำนวนเงิน']:,.2f} ฿: ระบุจำนวนเงินของหมวดแรกตรงนี้ ส่วนยอดที่เหลือของบิลนี้ให้ไปพิมพ์เพิ่มในฟอร์มด้านล่างก่อนเซฟ")
-            sc1, sc2, sc3 = st.columns([2, 3, 2])
-            with sc1:
-                edit_amt = st.number_input("จำนวนเงินหมวดแรก", min_value=0.0, max_value=t["จำนวนเงิน"], value=t["จำนวนเงิน"], step=1.0, key=f"amt_{idx}")
-            with sc2:
-                actual_cat = st.selectbox("หมวดหมู่ของยอดนี้", ["ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ"], key=f"act_cat_{idx}")
-            with sc3:
-                edit_note = st.text_input("แก้ไขหมายเหตุ", value=t["หมายเหตุ"], key=f"note_{idx}")
-            
-            pending_items_to_save.append({
-                "sheet_row": t["sheet_row"],
-                "is_split": True,
-                "edit_amt": edit_amt,
-                "edit_cat": actual_cat,
-                "edit_note": edit_note
-            })
+        with col1:
+            st.write(t['วันที่'])
+        with col2:
+            st.write(f"{t['จำนวนเงิน']:,.2f}")
+        with col3:
+            # ช่องหมายเหตุที่พิมพ์ได้
+            new_note = st.text_input("หมายเหตุ", value=t.get('หมายเหตุ', ''), key=f"note_{idx}", label_visibility="collapsed")
+        with col4:
+            # Dropdown เลือกหมวดหมู่
+            cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
+            current_cat = t.get("หมวดหมู่", "รอดำเนินการ")
+            if current_cat not in cat_options: current_cat = "รอดำเนินการ"
+            new_cat = st.selectbox("หมวดหมู่", options=cat_options, index=cat_options.index(current_cat), key=f"cat_{idx}", label_visibility="collapsed")
+
+        # เก็บค่าเพื่อรอเซฟ
+        pending_items_to_save.append({
+            "sheet_row": t["sheet_row"],
+            "edit_amt": t["จำนวนเงิน"],
+            "edit_cat": new_cat,
+            "edit_note": new_note
+        })
+
+
         else:
             pending_items_to_save.append({
                 "sheet_row": t["sheet_row"],
