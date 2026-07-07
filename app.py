@@ -408,13 +408,13 @@ if transactions:
                 )
                 
                 # ถ้าเลือกแยกบิล ให้แสดงช่องกรอกข้างในป๊อปอัพ
-                if new_cat == "แยกบิล":
-                    st.divider()
-                    st.text_input("ส่วนที่ 1", key=f"s1_{idx}")
-                    st.text_input("ส่วนที่ 2", key=f"s2_{idx}")
-                    st.text_input("ส่วนที่ 3", key=f"s3_{idx}")
-
-
+        if new_cat == "แยกบิล":
+            st.caption(f"แยกบิลของรายการนี้:") # เพื่อให้รู้ว่ากรอกของรายการไหน
+            sub_c1, sub_c2 = st.columns(2)
+            with sub_c1:
+                st.number_input("ค่ากิน", key=f"kin_{idx}")
+            with sub_c2:
+                st.number_input("ค่าส่วนตัว", key=f"suan_{idx}")
 
         # เก็บค่าเพื่อรอเซฟ (แก้ส่วนนี้ครับ)
         
