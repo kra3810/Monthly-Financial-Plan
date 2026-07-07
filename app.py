@@ -392,32 +392,17 @@ if transactions:
             new_note = st.text_input("หมายเหตุ", value=t.get('หมายเหตุ', ''), key=f"note_{idx}", label_visibility="collapsed")
 
         with col4:
-            radio_key = f"radio_cat_{idx}"
+            current_cat = t.get("หมวดหมู่", "รอดำเนินการ")
             
-            # 1. เช็คว่าผู้ใช้เคยเปลี่ยนค่าไว้ใน Session แล้วหรือยัง
-            if radio_key in st.session_state:
-                current_cat = st.session_state[radio_key]
-            else:
-                # ถ้ายังไม่เคยเปลี่ยน ให้ใช้ค่าจากตาราง (ค่าเริ่มต้น)
-                current_cat = t.get("หมวดหมู่", "รอดำเนินการ")
-
-            # 2. ใช้ popover (Label ต้องใช้ current_cat เพื่อให้มันอัปเดตชื่อหน้าปุ่ม)
+            # ใช้ popover เพื่อให้หน้าตาสะอาด (แสดงแค่ชื่อหมวดหมู่ปัจจุบัน)
             with st.popover(current_cat):
-                cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
-                
-                # 3. กำหนดค่าเริ่มต้นให้ radio ตรงกับ current_cat ที่เราเลือกไว้
-                current_idx = cat_options.index(current_cat) if current_cat in cat_options else 0
-                
+                # ใส่ key=f"cat_radio_{idx}" เพื่อแก้ Error DuplicateElementId
                 new_cat = st.radio(
                     "เลือกหมวดหมู่",
-                    cat_options,
-                    index=current_idx,
-                    key=radio_key, # ใช้ Key เดิมที่ตั้งไว้
-                    label_visibility="collapsed"
+                    ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"],
+                    index=["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"].index(current_cat) if current_cat in ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"] else 0,
+                    key=f"cat_radio_{idx}"
                 )
-
-
-
 
 
         # เก็บค่าเพื่อรอเซฟ
