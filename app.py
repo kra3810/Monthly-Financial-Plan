@@ -391,37 +391,31 @@ if transactions:
         with col3:
             new_note = st.text_input("หมายเหตุ", value=t.get('หมายเหตุ', ''), key=f"note_{idx}", label_visibility="collapsed")
 
-        with col4:
+                with col4:
             radio_key = f"radio_{idx}"
-            split_key = f"split_{idx}"
             cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
-
-            # ดึงค่าล่าสุด (เช็คจาก session_state ถ้าเคยเลือกไว้ ให้ใช้ค่านั้น ถ้าไม่เคย ใช้จาก Google Sheets)
             current_cat = st.session_state.get(radio_key, t.get("หมวดหมู่", "รอดำเนินการ"))
-            if current_cat not in cat_options:
-                current_cat = "รอดำเนินการ"
-
-            # 1. Popover สำหรับเลือกหมวดหมู่
+            
             with st.popover(current_cat):
-                new_cat = st.radio(
-                    "เลือกหมวดหมู่",
-                    cat_options,
-                    index=cat_options.index(current_cat),
-                    key=radio_key,
-                    label_visibility="collapsed"
-                )
-
-            # 2. ช่องกรอกแยกบิล (แสดงเฉพาะตอนเลือก "แยกบิล" และไม่มีปุ่มกด)
-            split_val = 1
+                new_cat = st.radio("เลือกหมวดหมู่", cat_options, index=cat_options.index(current_cat) if current_cat in cat_options else 0, key=radio_key, label_visibility="collapsed")
+            
+            # --- ส่วนการแยกบิล ---
+            split_data = None # เก็บรายละเอียดการแยกบิล
             if new_cat == "แยกบิล":
-                split_val = st.number_input(
-                    "จำนวนส่วน", 
-                    min_value=2, 
-                    value=2, 
-                    key=split_key,
-                    label_visibility="visible" # หรือ collapsed ถ้าอยากให้ประหยัดพื้นที่
-                )
+                with st.expander("ระบุรายละเอียดการแยกบิล", expanded=True):
+                    # ให้กรอก 2 ส่วน (หรือคุณจะเพิ่มมากกว่านี้ก็ได้)
+                    c1, c2 = st.columns(2)
+                    with c1:
+                        split_cat1 = st.selectbox("หมวด 1", ["ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ"], key=f"s_cat1_{idx}")
+                        split_amt1 = st.number_input("จำนวนเงิน 1", value=0.0, key=f"s_amt1_{idx}")
+                    with c2:
+                        split_cat2 = st.selectbox("หมวด 2", ["ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ"], key=f"s_cat2_{idx}")
+                        split_amt2 = st.number_input("จำนวนเงิน 2", value=0.0, key=f"s_amt2_{idx}")
+                    
+                    split_data = {"part1": {"cat": split_cat1, "amt": split_amt1}, "part2": {"cat": split_cat2, "amt": split_amt2}}
 
+
+                # เก็บค่าเพื่อรอเซฟ
                 # เก็บค่าเพื่อรอเซฟ
         pending_items_to_save.append({
             "sheet_row": t["sheet_row"],
@@ -429,7 +423,7 @@ if transactions:
             "edit_amt": t["จำนวนเงิน"],
             "edit_cat": new_cat,
             "edit_note": new_note,
-            "split_val": st.session_state.get(f"split_{idx}", 1) if new_cat == "แยกบิล" else 1
+            "split_details": split_data if new_cat == "แยกบิล" else None
         })
 
 
