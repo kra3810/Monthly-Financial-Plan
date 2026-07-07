@@ -377,7 +377,16 @@ if st.button("บันทึกข้อมูล", use_container_width=True):
                 new_rows.append([time_stamp, oth_in, "ค่าอื่นๆ", final_note])
             
             # สั่งเพิ่มแถวประวัติลงตารางพร้อมกันทีเดียว (ประหยัด API)
-            sheet.append_rows(new_rows, value_input_option='USER_ENTERED')
+            # 1. หาว่าคอลัมน์ A มีข้อมูลถึงบรรทัดที่เท่าไหร่ (เพื่อนับหาบรรทัดที่ว่างจริงๆ)
+            col_a_data = sheet.col_values(1)
+            next_row = len(col_a_data) + 1
+            end_row = next_row + len(new_rows) - 1
+            
+            # 2. เอาข้อมูลไปเขียนทับ (Overwrite) ในบรรทัดที่ว่าง โดยไม่สน Dropdown
+            sheet.batch_update(
+                [{'range': f'A{next_row}:D{end_row}', 'values': new_rows}], 
+                value_input_option='USER_ENTERED'
+            )
             
             st.success("✅ บันทึกประวัติลง Sheets เรียบร้อย! (ยอดรวมด้านบนจะคำนวณให้อัตโนมัติ)")
             st.rerun()
