@@ -410,17 +410,25 @@ if transactions:
                     split_amt = st.number_input("จำนวนเงินที่แยก", min_value=0.0, key=f"s_amt_{idx}")
 
 
-        pending_items_to_save.append({
-            "sheet_row": t["sheet_row"],
-            "edit_cat": new_cat,
-            "edit_note": new_note,
-            # เก็บข้อมูลแยกบิลไว้ใน dict เดียวกัน
-            "split_info": {
-                "is_split": (new_cat == "แยกบิล"),
+        # เก็บค่าเพื่อรอเซฟ (แก้ส่วนนี้ครับ)
+        
+        # ดึงค่าแยกบิลจาก session_state (ถ้ามี)
+        split_details = None
+        if new_cat == "แยกบิล":
+            split_details = {
                 "cat": st.session_state.get(f"s_cat_{idx}"),
                 "amt": st.session_state.get(f"s_amt_{idx}")
-            } if new_cat == "แยกบิล" else None
+            }
+
+        pending_items_to_save.append({
+            "sheet_row": t["sheet_row"],
+            "is_split": (new_cat == "แยกบิล"),
+            "edit_amt": t["จำนวนเงิน"],
+            "edit_cat": new_cat,
+            "edit_note": new_note,
+            "split_details": split_details # ใส่ข้อมูลที่ดึงมา
         })
+
 
 
 
