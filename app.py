@@ -371,15 +371,25 @@ if len(data) >= 30:
             st.write(t['วันที่'])
         with col2:
             st.write(f"{t['จำนวนเงิน']:,.2f}")
+                with col3:
+            # ช่องหมายเหตุที่พิมพ์ได้
+            new_note = st.text_input("หมายเหตุ", value=t.get('หมายเหตุ', ''), key=f"note_{idx}", label_visibility="collapsed")
+        with col4:
+            # Dropdown เลือกหมวดหมู่ (ต้องเคาะย่อหน้าเข้ามาระดับเดียวกับด้านบน)
+            cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
+            current_cat = t.get("หมวดหมู่", "รอดำเนินการ")
+            if current_cat not in cat_options: current_cat = "รอดำเนินการ"
+            new_cat = st.selectbox("หมวดหมู่", options=cat_options, index=cat_options.index(current_cat), key=f"cat_{idx}", label_visibility="collapsed")
         with col3:
             # ช่องหมายเหตุที่พิมพ์ได้
             new_note = st.text_input("หมายเหตุ", value=t.get('หมายเหตุ', ''), key=f"note_{idx}", label_visibility="collapsed")
         with col4:
-                    # Dropdown เลือกหมวดหมู่
-        cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
-        current_cat = t.get("หมวดหมู่", "รอดำเนินการ")
-        if current_cat not in cat_options: current_cat = "รอดำเนินการ"
-        new_cat = st.selectbox("หมวดหมู่", options=cat_options, index=cat_options.index(current_cat), key=f"cat_{idx}", label_visibility="collapsed")
+            # Dropdown เลือกหมวดหมู่ (ต้องเคาะย่อหน้าเข้ามาระดับเดียวกับด้านบน)
+            cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
+            current_cat = t.get("หมวดหมู่", "รอดำเนินการ")
+            if current_cat not in cat_options: current_cat = "รอดำเนินการ"
+            new_cat = st.selectbox("หมวดหมู่", options=cat_options, index=cat_options.index(current_cat), key=f"cat_{idx}", label_visibility="collapsed")
+ label_visibility="collapsed")
 
         # ตรวจสอบเงื่อนไขการบันทึก
         if new_cat == "แยกบิล":
