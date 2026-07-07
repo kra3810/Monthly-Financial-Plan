@@ -119,6 +119,15 @@ try:
 
     # =====================================================================
 
+# เพิ่มโค้ดนี้ไว้บนๆ เพื่อให้ดึง Google Sheets แค่ครั้งเดียว
+@st.cache_data(ttl=600) # โหลดครั้งเดียว แล้วจำไว้ 10 นาที
+def load_sheet_data():
+    return sheet.get_all_values()
+
+# ในส่วนที่เรียกใช้ data = sheet.get_all_values() ให้เปลี่ยนเป็น:
+data = load_sheet_data()
+
+
 except Exception as e:
     st.error(f"ระบบขัดข้องในการเชื่อมต่อ Google Sheets: {e}")
     st.stop()
@@ -393,16 +402,22 @@ if transactions:
 
         with col4:
             current_cat = t.get("หมวดหมู่", "รอดำเนินการ")
+            cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
             
-            # ใช้ popover เพื่อให้หน้าตาสะอาด (แสดงแค่ชื่อหมวดหมู่ปัจจุบัน)
+            # ป้องกัน Error กรณี current_cat ไม่มีใน List
+            idx = cat_options.index(current_cat) if current_cat in cat_options else 0
+            
+            # ใช้ popover เพื่อความสะอาด
             with st.popover(current_cat):
-                # ใส่ key=f"cat_radio_{idx}" เพื่อแก้ Error DuplicateElementId
+                # ใส่ key=f"radio_{idx}" และเปลี่ยนค่า index ให้เป็นเลขที่หามาแล้ว
                 new_cat = st.radio(
                     "เลือกหมวดหมู่",
-                    ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"],
-                    index=["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"].index(current_cat) if current_cat in ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"] else 0,
-                    key=f"cat_radio_{idx}"
+                    cat_options,
+                    index=idx,
+                    key=f"radio_{idx}",
+                    label_visibility="collapsed"
                 )
+
 
 
         # เก็บค่าเพื่อรอเซฟ
