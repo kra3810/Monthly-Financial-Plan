@@ -392,24 +392,27 @@ if transactions:
             new_note = st.text_input("หมายเหตุ", value=t.get('หมายเหตุ', ''), key=f"note_{idx}", label_visibility="collapsed")
 
         with col4:
-            current_cat = t.get("หมวดหมู่", "รอดำเนินการ")
+            # สร้าง ID เฉพาะสำหรับแถวนี้เพื่อจำค่า
+            radio_key = f"radio_{idx}"
+            
+            # 1. ดึงค่าล่าสุดจาก Session: ถ้ามีการเลือกแล้ว ให้ใช้ค่านั้น ถ้ายัง ให้ใช้ค่าจากตาราง
+            if radio_key in st.session_state:
+                current_cat = st.session_state[radio_key]
+            else:
+                current_cat = t.get("หมวดหมู่", "รอดำเนินการ")
+            
             cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
             
-            # หา index ล่วงหน้าเพื่อลดภาระในลูป
-            idx = cat_options.index(current_cat) if current_cat in cat_options else 0
-            
+            # 2. popover แสดง label เป็น current_cat ที่อัปเดตตลอดเวลา
             with st.popover(current_cat):
-                # ใส่ key=f"radio_{idx}" เพื่อแก้ Error DuplicateElementId
+                # 3. Radio อ่านค่าจาก Session โดยตรงผ่าน key
                 new_cat = st.radio(
                     "เลือกหมวดหมู่",
                     cat_options,
-                    index=idx,
-                    key=f"radio_{idx}",
+                    index=cat_options.index(current_cat) if current_cat in cat_options else 0,
+                    key=radio_key, 
                     label_visibility="collapsed"
                 )
-
-
-
 
         # เก็บค่าเพื่อรอเซฟ
         pending_items_to_save.append({
