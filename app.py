@@ -409,22 +409,17 @@ if transactions:
                 
                 # ถ้าเลือกแยกบิล ให้แสดงช่องกรอกข้างในป๊อปอัพ
         if new_cat == "แยกบิล":
-            st.caption(f"แยกบิลของรายการนี้:") # เพื่อให้รู้ว่ากรอกของรายการไหน
-            sub_c1, sub_c2 = st.columns(2)
-            with sub_c1:
-                st.number_input("ค่ากิน", key=f"kin_{idx}")
-            with sub_c2:
-                st.number_input("ค่าส่วนตัว", key=f"suan_{idx}")
-
-        # เก็บค่าเพื่อรอเซฟ (แก้ส่วนนี้ครับ)
-        
-        # ดึงค่าแยกบิลจาก session_state (ถ้ามี)
-        split_details = None
-        if new_cat == "แยกบิล":
-            split_details = {
-                "cat": st.session_state.get(f"s_cat_{idx}"),
-                "amt": st.session_state.get(f"s_amt_{idx}")
-            }
+            # ใช้ columns บีบให้ช่องมันเล็ก ไม่ใหญ่เต็มหน้าจอ
+            c1, c2, c3 = st.columns([1, 1, 2]) 
+            
+            with c1:
+                # ให้เลือกหมวดที่ต้องการแยกเอง (ไม่ต้องฮาร์ดโค้ด)
+                split_cat = st.selectbox("หมวด", ["ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ"], key=f"s_cat_{idx}", label_visibility="collapsed")
+            with c2:
+                # ช่องกรอกจำนวนเงินแบบสั้นๆ
+                split_amt = st.number_input("เงิน", key=f"s_amt_{idx}", label_visibility="collapsed")
+            with c3:
+                st.caption(f"แยกเข้า {split_cat}")
 
         pending_items_to_save.append({
             "sheet_row": t["sheet_row"],
