@@ -391,26 +391,28 @@ if transactions:
         with col3:
             new_note = st.text_input("หมายเหตุ", value=t.get('หมายเหตุ', ''), key=f"note_{idx}", label_visibility="collapsed")
 
-        with col4:
-            # เลือกหมวดหมู่
-            new_cat = st.selectbox(
-                "หมวดหมู่", 
-                ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"],
-                index=0, # ปรับตาม logic ค่าปัจจุบันของคุณ
-                key=f"cat_{idx}", 
-                label_visibility="collapsed"
-            )
-
-            # ถ้าเลือกแยกบิล ให้แสดงช่องกรอก 3 อันข้างใต้ทันที
-            if new_cat == "แยกบิล":
-                st.caption("ระบุรายละเอียดการแยกบิล:")
-                s1, s2, s3 = st.columns(3)
-                with s1:
-                    st.text_input("ส่วนที่ 1", key=f"s1_{idx}", label_visibility="collapsed")
-                with s2:
-                    st.text_input("ส่วนที่ 2", key=f"s2_{idx}", label_visibility="collapsed")
-                with s3:
-                    st.text_input("ส่วนที่ 3", key=f"s3_{idx}", label_visibility="collapsed")
+                with col4:
+            radio_key = f"radio_{idx}"
+            cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
+            
+            # ดึงค่าปัจจุบัน
+            current_cat = st.session_state.get(radio_key, t.get("หมวดหมู่", "รอดำเนินการ"))
+            
+            # Popover ตัวเดียวจบ ไม่รกตาราง
+            with st.popover(current_cat):
+                new_cat = st.radio(
+                    "เลือกหมวดหมู่", 
+                    cat_options, 
+                    index=cat_options.index(current_cat) if current_cat in cat_options else 0, 
+                    key=radio_key
+                )
+                
+                # ถ้าเลือกแยกบิล ให้แสดงช่องกรอกข้างในป๊อปอัพ
+                if new_cat == "แยกบิล":
+                    st.divider()
+                    st.text_input("ส่วนที่ 1", key=f"s1_{idx}")
+                    st.text_input("ส่วนที่ 2", key=f"s2_{idx}")
+                    st.text_input("ส่วนที่ 3", key=f"s3_{idx}")
 
 
 
