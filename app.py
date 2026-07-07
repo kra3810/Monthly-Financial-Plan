@@ -361,7 +361,7 @@ oth_color  = "green" if (budget_other - used_other) >= 0 else "red"
 # --- จัดการรายจ่าย (รอดำเนินการ + บันทึกเพิ่ม) แบบรวมปุ่มเดียว ---
 st.subheader("📝 จัดการรายจ่ายประจำเดือน")
 
-# 1. ดึงข้อมูลรายการรอดำเนินการมาแสดงในตาราง
+# 1. ดึงข้อมูลรายการรอดำเนินการมาจัดเป็นแถวรายการปกติ
 transactions = []
 if len(data) >= 30:
     for i, row in enumerate(data[29:]):
@@ -377,89 +377,103 @@ if len(data) >= 30:
                 "หมายเหตุ": str(row[3]).strip()
             })
 
-df_tx = pd.DataFrame(transactions)
-if not df_tx.empty:
-    st.markdown("**1. เคลียร์รายการรอดำเนินการ** (เลือกหมวดหมู่ หรือคลิกแก้ตัวเลขหากต้องการแยกบิล)")
-    df_display = df_tx.drop(columns=["sheet_row"])
+pending_items_to_save = []
+
+if transactions:
+    st.markdown("**1. รายการรอดำเนินการ** (เลือกหมวดหมู่ได้ปกติ หรือแก้ไขจำนวนเงินได้ทันทีหากเป็นบิลที่ปนกัน)")
     
-    edited_df = st.data_editor(
-        df_display,
-        column_config={
-            "วันที่": st.column_config.TextColumn("วันที่", disabled=True),
-            # เปิดให้แก้จำนวนเงินได้ เผื่อบิล 1,000 บาท คุณแก้เหลือ 600 เป็นค่ากิน แล้วไปกรอก 400 เป็นของใช้ข้างล่าง
-            "จำนวนเงิน": st.column_config.NumberColumn("จำนวนเงิน", disabled=False, format="%.2f ฿"),
-            "หมวดหมู่": st.column_config.SelectboxColumn("หมวดหมู่", options=["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ"], required=True),
-            "หมายเหตุ": st.column_config.TextColumn("หมายเหตุ")
-        },
-        hide_index=True,
-        use_container_width=True,
-        key=f"editor_{selected_month}"
-    )
+    # ส่วนหัวคอลัมน์แบบเรียบง่าย
+    hcol1, hcol2, hcol3, hcol4 = st.columns([1.5, 1.5, 2.5, 2.5])
+    with hcol1: st.caption("📅 วันที่")
+    with hcol2: st.caption("💰 จำนวนเงิน (฿)")
+    with hcol3: st.caption("📝 หมายเหตุ")
+    with hcol4: st.caption("🗂️ หมวดหมู่")
+    
+    # แสดงแถวรายการรอดำเนินการแบบคลีน ไม่ใช้กล่องหนา
+    for idx, t in enumerate(transactions):
+        col1, col2, col3, col4 = st.columns([1.5, 1.5, 2.5, 2.5])
+        with col1:
+            st.write(t["วันที่"])
+        with col2:
+            # แก้ไขตัวเลขจำนวนเงินในบรรทัดได้เลยหากเป็นบิลที่ปนกัน
+            edit_amt = st.number_input("เงิน", min_value=0.0, value=t["จำนวนเงิน"], step=1.0, key=f"amt_{idx}", label_visibility="collapsed")
+        with col3:
+            edit_note = st.text_input("หมายเหตุ", value=t["หมายเหตุ"], key=f"note_{idx}", label_visibility="collapsed")
+        with col4:
+            # Dropdown เลือกหมวดหมู่ปกติ
+            cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ"]
+            current_idx = cat_options.index(t["หมวดหมู่"]) if t["หมวดหมู่"] in cat_options else 0
+            edit_cat = st.selectbox("หมวดหมู่", options=cat_options, index=current_idx, key=f"cat_{idx}", label_visibility="collapsed")
+        
+        pending_items_to_save.append({
+            "sheet_row": t["sheet_row"],
+            "orig_amt": t["จำนวนเงิน"],
+            "orig_cat": t["หมวดหมู่"],
+            "orig_note": t["หมายเหตุ"],
+            "edit_amt": edit_amt,
+            "edit_cat": edit_cat,
+            "edit_note": edit_note
+        })
 else:
-    edited_df = pd.DataFrame()
     st.success("🎉 ไม่มีรายการรอดำเนินการค้างอยู่")
 
 st.write("")
 
-# 2. ฟอร์มกรอกรายจ่ายเพิ่มเติม (วางต่อกันเลย ไม่ซ่อนแล้ว)
-st.markdown("**2. บันทึกรายจ่ายเพิ่มเติม / ส่วนต่างจากการแยกบิล**")
+# 2. ฟอร์มบันทึกเพิ่ม (Manual Input) พับเก็บใน st.expander วางต่อท้ายถัดจากรายการรอดำเนินการทันที
+with st.expander("➕ บันทึกรายจ่ายใหม่แบบกรอกเอง (Manual Input)"):
+    col_f, col_p, col_o = st.columns(3)
+    with col_f: food_in = st.number_input(f"🍔 ค่ากิน - :{food_color}[{food_remain_text}]", min_value=0.0, step=1.0, key="man_food")
+    with col_p: pers_in = st.number_input(f"🛍️ ใช้ส่วนตัว - :{pers_color}[{pers_remain_text}]", min_value=0.0, step=1.0, key="man_pers")
+    with col_o: oth_in  = st.number_input(f"📦 อื่นๆ - :{oth_color}[{oth_remain_text}]", min_value=0.0, step=1.0, key="man_oth")
+    
+    manual_note = st.text_input("หมายเหตุ (หากไม่ใส่ ระบบจะบันทึกเป็น '-')", key="man_note")
 
-col_f, col_p, col_o = st.columns(3)
-with col_f: food_in = st.number_input(f"🍔 ค่ากิน - :{food_color}[{food_remain_text}]", min_value=0.0, step=1.0)
-with col_p: pers_in = st.number_input(f"🛍️ ใช้ส่วนตัว - :{pers_color}[{pers_remain_text}]", min_value=0.0, step=1.0)
-with col_o: oth_in  = st.number_input(f"📦 อื่นๆ - :{oth_color}[{oth_remain_text}]", min_value=0.0, step=1.0)
+st.write("")
 
-note = st.text_input("หมายเหตุ (หากไม่ใส่ ระบบจะบันทึกเป็น '-')", key="unified_note")
-
-# 3. ปุ่มบันทึกปุ่มเดียว จัดการทุกอย่าง
+# 3. ปุ่มบันทึกข้อมูลทั้งหมด อยู่ล่างสุดตัวเดียว (ใต้กล่องบันทึกเพิ่ม)
 if st.button("💾 บันทึกข้อมูลทั้งหมด", type="primary", use_container_width=True):
-    updates = []
+    batch_updates = []
     new_rows = []
     
-    # ตรวจสอบการแก้ไขในตารางรอดำเนินการ (ถ้ามี)
-    if not df_tx.empty:
-        for i in range(len(df_tx)):
-            orig = df_tx.iloc[i]
-            edit = edited_df.iloc[i]
+    # ตรวจสอบการอัปเดตรายการรอดำเนินการ
+    for item in pending_items_to_save:
+        if item["edit_cat"] != item["orig_cat"] or float(item["edit_amt"]) != float(item["orig_amt"]) or item["edit_note"] != item["orig_note"]:
+            row_num = item["sheet_row"]
+            batch_updates.append({
+                'range': f'B{row_num}:D{row_num}',
+                'values': [[item["edit_amt"], item["edit_cat"], item["edit_note"]]]
+            })
             
-            # ถ้ามีการเปลี่ยนหมวดหมู่, ตัวเลขเงิน, หรือหมายเหตุ ให้จับยัดเข้า updates
-            if edit["หมวดหมู่"] != "รอดำเนินการ" or float(edit["จำนวนเงิน"]) != float(orig["จำนวนเงิน"]) or edit["หมายเหตุ"] != orig["หมายเหตุ"]:
-                row_num = orig["sheet_row"]
-                updates.append({
-                    'range': f'B{row_num}:D{row_num}', # อัปเดตทับ B(เงิน), C(หมวด), D(หมายเหตุ)
-                    'values': [[edit["จำนวนเงิน"], edit["หมวดหมู่"], edit["หมายเหตุ"]]]
-                })
-
-    # ตรวจสอบการกรอกข้อมูลใหม่
+    # ตรวจสอบการกรอกข้อมูลเพิ่มจากฟอร์ม Manual
     if food_in > 0 or pers_in > 0 or oth_in > 0:
-        final_note = note.strip() if note.strip() else "-"
+        final_note = manual_note.strip() if manual_note.strip() else "-"
         time_stamp = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
         if food_in > 0: new_rows.append([time_stamp, food_in, "ค่ากิน", final_note])
         if pers_in > 0: new_rows.append([time_stamp, pers_in, "ค่าใช้จ่ายส่วนตัว", final_note])
         if oth_in > 0: new_rows.append([time_stamp, oth_in, "ค่าอื่นๆ", final_note])
 
-    # ยิงข้อมูลเข้า Google Sheets ทีเดียว
-    if updates or new_rows:
+    # ส่งข้อมูลเข้า Google Sheets พร้อมกันทีเดียว
+    if batch_updates or new_rows:
         try:
-            with st.spinner("กำลังอัปเดตข้อมูล..."):
-                if updates:
-                    sheet.batch_update(updates, value_input_option='USER_ENTERED')
-                
+            with st.spinner("กำลังบันทึกข้อมูลทั้งหมด..."):
+                if batch_updates:
+                    sheet.batch_update(batch_updates, value_input_option='USER_ENTERED')
                 if new_rows:
                     col_a_data = sheet.col_values(1)
                     next_row = len(col_a_data) + 1
                     end_row = next_row + len(new_rows) - 1
                     sheet.batch_update([{'range': f'A{next_row}:D{end_row}', 'values': new_rows}], value_input_option='USER_ENTERED')
             
-            st.success("✅ บันทึกข้อมูลเรียบร้อย!")
+            st.success("✅ บันทึกข้อมูลทั้งหมดเรียบร้อยแล้ว!")
             st.rerun()
         except Exception as e:
             st.error(f"เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheets: {e}")
     else:
-        st.warning("⚠️ ไม่มีข้อมูลใหม่ให้บันทึก (กรุณาเลือกหมวดหมู่หรือกรอกยอดเงินก่อนกดบันทึก)")
+        st.warning("⚠️ ไม่มีข้อมูลการเปลี่ยนแปลงหรือรายจ่ายใหม่เพื่อบันทึก")
 
 st.markdown("---")
 # =====================================================================
+
 
 
 # --- 5. ตรวจสอบเงินในมือ (เพิ่มใหม่แบบแก้ไขได้) ---
