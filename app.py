@@ -364,7 +364,7 @@ st.subheader("📝 จัดการรายจ่ายประจำเด�
 # 1. ดึงข้อมูลรายการรอดำเนินการมาจัดเป็นแถวรายการปกติ
 transactions = []
 if len(data) >= 30:
-        for idx, t in enumerate(transactions):
+    for idx, t in enumerate(transactions):
         col1, col2, col3, col4 = st.columns([1.5, 1, 2, 2])
         
         with col1:
@@ -388,6 +388,7 @@ if len(data) >= 30:
             "edit_cat": new_cat,
             "edit_note": new_note
         })
+
 
 
         else:
