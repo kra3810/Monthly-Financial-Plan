@@ -375,30 +375,32 @@ if len(data) >= 30:
             # ช่องหมายเหตุที่พิมพ์ได้
             new_note = st.text_input("หมายเหตุ", value=t.get('หมายเหตุ', ''), key=f"note_{idx}", label_visibility="collapsed")
         with col4:
-            # Dropdown เลือกหมวดหมู่
-            cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
-            current_cat = t.get("หมวดหมู่", "รอดำเนินการ")
-            if current_cat not in cat_options: current_cat = "รอดำเนินการ"
-            new_cat = st.selectbox("หมวดหมู่", options=cat_options, index=cat_options.index(current_cat), key=f"cat_{idx}", label_visibility="collapsed")
+                    # Dropdown เลือกหมวดหมู่
+        cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
+        current_cat = t.get("หมวดหมู่", "รอดำเนินการ")
+        if current_cat not in cat_options: current_cat = "รอดำเนินการ"
+        new_cat = st.selectbox("หมวดหมู่", options=cat_options, index=cat_options.index(current_cat), key=f"cat_{idx}", label_visibility="collapsed")
 
-        # เก็บค่าเพื่อรอเซฟ
-        pending_items_to_save.append({
-            "sheet_row": t["sheet_row"],
-            "edit_amt": t["จำนวนเงิน"],
-            "edit_cat": new_cat,
-            "edit_note": new_note
-        })
-
-
-
+        # ตรวจสอบเงื่อนไขการบันทึก
+        if new_cat == "แยกบิล":
+            # กรณีเลือก "แยกบิล"
+            pending_items_to_save.append({
+                "sheet_row": t["sheet_row"],
+                "is_split": True, # หรือ logic ที่คุณต้องการ
+                "edit_amt": t["จำนวนเงิน"],
+                "edit_cat": new_cat,
+                "edit_note": new_note
+            })
         else:
+            # กรณีปกติ
             pending_items_to_save.append({
                 "sheet_row": t["sheet_row"],
                 "is_split": False,
                 "edit_amt": t["จำนวนเงิน"],
-                "edit_cat": edit_cat,
-                "edit_note": t["หมายเหตุ"]
+                "edit_cat": new_cat,
+                "edit_note": new_note
             })
+            
         st.markdown("<div style='margin-bottom: 10px; border-bottom: 1px solid #f0f2f6;'></div>", unsafe_allow_html=True)
 else:
     st.success("🎉 ไม่มีรายการรอดำเนินการค้างอยู่")
