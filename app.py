@@ -391,9 +391,16 @@ if transactions:
         with col3:
             new_note = st.text_input("หมายเหตุ", value=t.get('หมายเหตุ', ''), key=f"note_{idx}", label_visibility="collapsed")
         with col4:
-            # Dropdown ให้เลือกเปลี่ยนจาก "รอดำเนินการ" เป็นอย่างอื่น
+            # เพิ่ม disabled=True เพื่อล็อคไม่ให้กดแก้ไข
             cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
-            new_cat = st.selectbox("หมวดหมู่", options=cat_options, index=0, key=f"cat_{idx}", label_visibility="collapsed")
+            new_cat = st.selectbox(
+                "หมวดหมู่", 
+                options=cat_options, 
+                index=0, 
+                key=f"cat_{idx}", 
+                label_visibility="collapsed",
+                disabled=True  # <--- ใส่คำสั่งนี้ครับ
+            )
 
         # เก็บค่าเพื่อรอเซฟ
         pending_items_to_save.append({
