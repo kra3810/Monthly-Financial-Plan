@@ -365,7 +365,7 @@ if st.button("บันทึกข้อมูล", use_container_width=True):
     if food_in > 0 or pers_in > 0 or oth_in > 0:
         try:
             final_note = note.strip() if note.strip() else "-"
-            time_stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            time_stamp = datetime.datetime.now().strftime("%d/%m/%Y %H:%M:%S")
             
             # เตรียมโครงสร้างข้อมูลแถวใหม่แบบ 4 คอลัมน์ [วันเวลา, จำนวนเงิน, หมวดหมู่, หมายเหตุ]
             new_rows = []
@@ -377,7 +377,7 @@ if st.button("บันทึกข้อมูล", use_container_width=True):
                 new_rows.append([time_stamp, oth_in, "ค่าอื่นๆ", final_note])
             
             # สั่งเพิ่มแถวประวัติลงตารางพร้อมกันทีเดียว (ประหยัด API)
-            sheet.append_rows(new_rows)
+            sheet.append_rows(new_rows, value_input_option='USER_ENTERED')
             
             st.success("✅ บันทึกประวัติลง Sheets เรียบร้อย! (ยอดรวมด้านบนจะคำนวณให้อัตโนมัติ)")
             st.rerun()
