@@ -391,18 +391,17 @@ if transactions:
         with col3:
             new_note = st.text_input("หมายเหตุ", value=t.get('หมายเหตุ', ''), key=f"note_{idx}", label_visibility="collapsed")
         with col4:
-            cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
-            # ใช้ current_cat เป็นค่าเริ่มต้นเพื่อให้ปุ่มเลือกตัวนั้นไว้ตั้งแต่เปิดหน้าจอ
             current_cat = t.get("หมวดหมู่", "รอดำเนินการ")
             
-            new_cat = st.segmented_control(
-                "หมวดหมู่",
-                options=cat_options,
-                selection_mode="single",
-                default=current_cat,
-                key=f"cat_{idx}",
-                label_visibility="collapsed"
-            )
+            # ใช้ popover เพื่อให้หน้าตาสะอาด (แสดงแค่ชื่อหมวดหมู่ปัจจุบัน)
+            with st.popover(current_cat):
+                # ใช้ radio หรือ selectbox ไว้ข้างใน popover
+                new_cat = st.radio(
+                    "เลือกหมวดหมู่",
+                    ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"],
+                    index=["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"].index(current_cat)
+                )
+
 
 
         # เก็บค่าเพื่อรอเซฟ
