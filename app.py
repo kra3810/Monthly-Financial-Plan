@@ -364,28 +364,27 @@ if st.button("บันทึกข้อมูล", use_container_width=True):
     # ป้องกันการเผลอกดบันทึกตอนยอดเงินเป็น 0 ทั้งหมด
     if food_in > 0 or pers_in > 0 or oth_in > 0:
         try:
-            # 1. จัดรูปแบบเป็น Batch Update เพื่อลดการเรียก API ไปยัง Google Sheets
-            updates = []
-            if food_in > 0: updates.append({'range': 'B3', 'values': [[used_food + food_in]]})
-            if pers_in > 0: updates.append({'range': 'B4', 'values': [[used_personal + pers_in]]})
-            if oth_in > 0: updates.append({'range': 'B5', 'values': [[used_other + oth_in]]})
-            
-            if updates:
-                sheet.batch_update(updates)
-
-            # 2. ตั้งค่า Default หมายเหตุและบันทึกประวัติทุกครั้ง
             final_note = note.strip() if note.strip() else "-"
             time_stamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            new_row = [time_stamp, food_in, pers_in, oth_in, final_note]
             
-            sheet.append_row(new_row)
+            # เตรียมโครงสร้างข้อมูลแถวใหม่แบบ 4 คอลัมน์ [วันเวลา, จำนวนเงิน, หมวดหมู่, หมายเหตุ]
+            new_rows = []
+            if food_in > 0:
+                new_rows.append([time_stamp, food_in, "ค่ากิน", final_note])
+            if pers_in > 0:
+                new_rows.append([time_stamp, pers_in, "ค่าใช้จ่ายส่วนตัว", final_note])
+            if oth_in > 0:
+                new_rows.append([time_stamp, oth_in, "ค่าอื่นๆ", final_note])
             
-            st.success("✅ อัปเดตเงิน และบันทึกประวัติลง Sheets เรียบร้อย!")
+            # สั่งเพิ่มแถวประวัติลงตารางพร้อมกันทีเดียว (ประหยัด API)
+            sheet.append_rows(new_rows)
+            
+            st.success("✅ บันทึกประวัติลง Sheets เรียบร้อย! (ยอดรวมด้านบนจะคำนวณให้อัตโนมัติ)")
             st.rerun()
             
         except Exception as e:
             st.error(f"เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheets: {e}")
-            print(f"Update/Append Error: {e}")
+            print(f"Append Rows Error: {e}")
     else:
         st.warning("⚠️ กรุณาระบุจำนวนเงินอย่างน้อย 1 รายการก่อนกดบันทึก")
 
