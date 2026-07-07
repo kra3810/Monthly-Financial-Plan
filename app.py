@@ -362,15 +362,15 @@ oth_color  = "green" if (budget_other - used_other) >= 0 else "red"
 st.subheader("📝 จัดการรายจ่ายประจำเดือน")
 
 # --- 1. เตรียมข้อมูลรายการ (กรองเฉพาะ "รอดำเนินการ") ---
-pending_items_to_save = [] 
+pending_items_to_save = []
 transactions = []
 
 # ข้อมูลเริ่มที่แถว 30 (index 29)
 if len(data) >= 30:
     for i in range(29, len(data)):
         row = data[i]
-        # เพิ่มเงื่อนไข: ต้องมีวันที่ และ หมวดหมู่ต้องเป็น "รอดำเนินการ" เท่านั้น
-        if row[0] and (row[2] == "รอดำเนินการ"): 
+        # ตรวจสอบแถวที่ไม่ว่างและกรองเฉพาะหมวด "รอดำเนินการ"
+        if row[0] and (row[2] == "รอดำเนินการ"):
             transactions.append({
                 "sheet_row": i + 1,
                 "วันที่": row[0],
@@ -391,15 +391,14 @@ if transactions:
         with col3:
             new_note = st.text_input("หมายเหตุ", value=t.get('หมายเหตุ', ''), key=f"note_{idx}", label_visibility="collapsed")
         with col4:
-            # เพิ่ม disabled=True เพื่อล็อคไม่ให้กดแก้ไข
             cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
+            # สั่งให้เป็น Selectbox ที่เลือกได้จากตัวเลือกเท่านั้น
             new_cat = st.selectbox(
-                "หมวดหมู่", 
-                options=cat_options, 
-                index=0, 
-                key=f"cat_{idx}", 
-                label_visibility="collapsed",
-                disabled=True  # <--- ใส่คำสั่งนี้ครับ
+                "หมวดหมู่",
+                options=cat_options,
+                index=0,
+                key=f"cat_{idx}",
+                label_visibility="collapsed"
             )
 
         # เก็บค่าเพื่อรอเซฟ
@@ -410,10 +409,11 @@ if transactions:
             "edit_cat": new_cat,
             "edit_note": new_note
         })
-            
+
         st.markdown("<div style='margin-bottom: 10px; border-bottom: 1px solid #f0f2f6;'></div>", unsafe_allow_html=True)
 else:
     st.success("🎉 ไม่มีรายการรอดำเนินการค้างอยู่")
+
 
 st.write("")
 
