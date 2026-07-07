@@ -408,27 +408,25 @@ if transactions:
                 )
                 
                 # ถ้าเลือกแยกบิล ให้แสดงช่องกรอกข้างในป๊อปอัพ
+                # --- ก่อนบรรทัด append ให้ใส่แบบนี้ ---
+        split_details = None  # ประกาศค่าเริ่มต้นไว้ก่อน
+        
         if new_cat == "แยกบิล":
-            # ใช้ columns บีบให้ช่องมันเล็ก ไม่ใหญ่เต็มหน้าจอ
-            c1, c2, c3 = st.columns([1, 1, 2]) 
-            
-            with c1:
-                # ให้เลือกหมวดที่ต้องการแยกเอง (ไม่ต้องฮาร์ดโค้ด)
-                split_cat = st.selectbox("หมวด", ["ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ"], key=f"s_cat_{idx}", label_visibility="collapsed")
-            with c2:
-                # ช่องกรอกจำนวนเงินแบบสั้นๆ
-                split_amt = st.number_input("เงิน", key=f"s_amt_{idx}", label_visibility="collapsed")
-            with c3:
-                st.caption(f"แยกเข้า {split_cat}")
+            split_details = {
+                "cat": st.session_state.get(f"s_cat_{idx}"),
+                "amt": st.session_state.get(f"s_amt_{idx}")
+            }
 
+        # --- แล้วค่อย append ต่อท้าย ---
         pending_items_to_save.append({
             "sheet_row": t["sheet_row"],
             "is_split": (new_cat == "แยกบิล"),
             "edit_amt": t["จำนวนเงิน"],
             "edit_cat": new_cat,
             "edit_note": new_note,
-            "split_details": split_details # ใส่ข้อมูลที่ดึงมา
+            "split_details": split_details
         })
+
 
 
 
