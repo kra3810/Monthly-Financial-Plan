@@ -394,37 +394,34 @@ if transactions:
         with col4:
             radio_key = f"radio_{idx}"
             cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
+            
+            # ดึงค่าจาก Session
             current_cat = st.session_state.get(radio_key, t.get("หมวดหมู่", "รอดำเนินการ"))
-            
+
+            # Popover เป็นจุดเดียวที่จัดการทุกอย่าง (ห้ามมีอะไรโผล่นอกเหนือจากนี้)
             with st.popover(current_cat):
-                new_cat = st.radio("เลือกหมวดหมู่", cat_options, index=cat_options.index(current_cat) if current_cat in cat_options else 0, key=radio_key, label_visibility="collapsed")
-            
-            # --- ส่วนการแยกบิล ---
-            split_data = None # เก็บรายละเอียดการแยกบิล
-            if new_cat == "แยกบิล":
-                with st.expander("ระบุรายละเอียดการแยกบิล", expanded=True):
-                    # ให้กรอก 2 ส่วน (หรือคุณจะเพิ่มมากกว่านี้ก็ได้)
-                    c1, c2 = st.columns(2)
-                    with c1:
-                        split_cat1 = st.selectbox("หมวด 1", ["ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ"], key=f"s_cat1_{idx}")
-                        split_amt1 = st.number_input("จำนวนเงิน 1", value=0.0, key=f"s_amt1_{idx}")
-                    with c2:
-                        split_cat2 = st.selectbox("หมวด 2", ["ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ"], key=f"s_cat2_{idx}")
-                        split_amt2 = st.number_input("จำนวนเงิน 2", value=0.0, key=f"s_amt2_{idx}")
-                    
-                    split_data = {"part1": {"cat": split_cat1, "amt": split_amt1}, "part2": {"cat": split_cat2, "amt": split_amt2}}
+                new_cat = st.radio("หมวดหมู่หลัก", cat_options, index=cat_options.index(current_cat) if current_cat in cat_options else 0, key=radio_key)
+                
+                # ถ้าเลือก "แยกบิล" ค่อยโชว์ส่วนเสริมเล็กๆ ไว้ข้างในนี้
+                if new_cat == "แยกบิล":
+                    st.divider()
+                    st.caption("ส่วนที่แยกออกมา:")
+                    split_cat = st.selectbox("หมวดหมู่ส่วนที่แยก", cat_options[:4], key=f"s_cat_{idx}")
+                    split_amt = st.number_input("จำนวนเงินที่แยก", min_value=0.0, key=f"s_amt_{idx}")
 
 
-                # เก็บค่าเพื่อรอเซฟ
-                # เก็บค่าเพื่อรอเซฟ
         pending_items_to_save.append({
             "sheet_row": t["sheet_row"],
-            "is_split": (new_cat == "แยกบิล"),
-            "edit_amt": t["จำนวนเงิน"],
             "edit_cat": new_cat,
             "edit_note": new_note,
-            "split_details": split_data if new_cat == "แยกบิล" else None
+            # เก็บข้อมูลแยกบิลไว้ใน dict เดียวกัน
+            "split_info": {
+                "is_split": (new_cat == "แยกบิล"),
+                "cat": st.session_state.get(f"s_cat_{idx}"),
+                "amt": st.session_state.get(f"s_amt_{idx}")
+            } if new_cat == "แยกบิล" else None
         })
+
 
 
         st.markdown("<div style='margin-bottom: 10px; border-bottom: 1px solid #f0f2f6;'></div>", unsafe_allow_html=True)
