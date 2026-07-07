@@ -88,21 +88,20 @@ try:
                             spreadsheet.duplicate_sheet(source_sheet_id=prev_sheet.id, new_sheet_name=next_month_name)
                             new_sheet = spreadsheet.worksheet(next_month_name)
 
+                            # เอา B3, B4, B5 ออก เพื่อป้องกันไม่ให้ไปเขียนทับสูตร SUMIFS ตัวใหม่ด้านบน
                             updates = [
-                                {'range': 'B3', 'values': [[0]]},   # รีเซ็ตยอดกิน
-                                {'range': 'B4', 'values': [[0]]},   # รีเซ็ตยอดส่วนตัว
-                                {'range': 'B5', 'values': [[0]]},   # รีเซ็ตยอดอื่นๆ
                                 {'range': 'F2', 'values': [[0]]},   # รีเซ็ตเงินที่รับจากบ้านเป็น 0
                                 {'range': 'B11', 'values': [[0]]},  # รีเซ็ตเงินสดในมือ
                                 {'range': 'B12', 'values': [[0]]},  # รีเซ็ตเงินโอน
                                 {'range': 'F4', 'values': [[carry_cash]]}, # นำเงินเหลือมาใส่ F4
                                 {'range': 'F16', 'values': [[0]]},   # รีเซ็ตช่องรายได้ส่วนตัวเป็น 0
-                                {'range': 'C26', 'values': [['']]}
+                                {'range': 'C26', 'values': [['']]}  # ล้างค่า C26 ให้ว่างเปล่า
                             ]
                             new_sheet.batch_update(updates)
 
-                            if len(prev_data) >= 28:
-                                new_sheet.delete_rows(28, len(prev_data))
+                            # เปลี่ยนมาเริ่มลบข้อมูลเก่าตั้งแต่แถวที่ 30 ลงไป เพื่อรักษาหัวตารางประวัติในแถว 29 ไว้
+                            if len(prev_data) >= 30:
+                                new_sheet.delete_rows(30, len(prev_data))
 
                             st.success(f"✅ บันทึกสถิติและขึ้นเดือนใหม่สำเร็จ!")
                             st.query_params["month"] = next_month_name
