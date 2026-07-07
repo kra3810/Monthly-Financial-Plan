@@ -391,7 +391,7 @@ if transactions:
         with col3:
             new_note = st.text_input("หมายเหตุ", value=t.get('หมายเหตุ', ''), key=f"note_{idx}", label_visibility="collapsed")
 
-                with col4:
+        with col4:
             radio_key = f"radio_{idx}"
             cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
             current_cat = st.session_state.get(radio_key, t.get("หมวดหมู่", "รอดำเนินการ"))
