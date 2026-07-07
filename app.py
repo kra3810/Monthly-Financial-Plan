@@ -403,13 +403,16 @@ if transactions:
             with st.popover(current_val):
                 new_cat = st.radio("เลือกหมวดหมู่", cat_options, index=cat_options.index(current_val) if current_val in cat_options else 0, key=radio_key)
 
-            # --- ถ้าแยกบิล ให้แสดงช่องกรอกที่นี่เลย ---
-            if new_cat == "แยกบิล":
-                # แยกให้กรอก 2 ช่องแบบสั้นๆ (ใช้ session_state จำค่า)
-                # ผมใช้ key ที่ผูกกับ idx เพื่อให้แต่ละแถวไม่ตีกัน
-                st.write("ระบุยอดแยก:")
-                st.number_input("จำนวนเงินส่วนที่ 1", key=f"s1_{idx}", label_visibility="collapsed")
-                st.number_input("จำนวนเงินส่วนที่ 2", key=f"s2_{idx}", label_visibility="collapsed")
+        # --- ส่วนแสดงช่องกรอกแยกบิล (วางไว้ใต้แถว) ---
+        if new_cat == "แยกบิล":
+            c1, c2, c3 = st.columns(3)
+            with c1:
+                st.number_input("ค่ากิน", key=f"kin_{idx}", value=0.0)
+            with c2:
+                st.number_input("ค่าใช้จ่ายส่วนตัว", key=f"suan_{idx}", value=0.0)
+            with c3:
+                st.number_input("ค่าอื่นๆ", key=f"other_{idx}", value=0.0)
+
 
         # เคลียร์ตัวแปรให้พร้อม
         split_data = None
@@ -420,12 +423,19 @@ if transactions:
                 "amt2": st.session_state.get(f"s2_{idx}", 0)
             }
 
+        # เก็บค่าเข้า list
         pending_items_to_save.append({
             "sheet_row": t["sheet_row"],
-            "edit_amt": t["จำนวนเงิน"],
             "edit_cat": new_cat,
-            "split_data": split_data  # เก็บข้อมูลการแยกบิลไปด้วย
+            "is_split": (new_cat == "แยกบิล"),
+            # เก็บค่าแยกบิล (ถ้าไม่ได้แยกจะเป็น 0)
+            "split_vals": {
+                "kin": st.session_state.get(f"kin_{idx}", 0.0),
+                "suan": st.session_state.get(f"suan_{idx}", 0.0),
+                "other": st.session_state.get(f"other_{idx}", 0.0)
+            } if new_cat == "แยกบิล" else None
         })
+
 
 
                 
