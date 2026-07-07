@@ -392,14 +392,17 @@ if transactions:
             new_note = st.text_input("หมายเหตุ", value=t.get('หมายเหตุ', ''), key=f"note_{idx}", label_visibility="collapsed")
         with col4:
             cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
-            # สั่งให้เป็น Selectbox ที่เลือกได้จากตัวเลือกเท่านั้น
-            new_cat = st.selectbox(
+            
+            # เปลี่ยนมาใช้ st.radio เพื่อตัดปัญหาเรื่องการพิมพ์/แก้ไขข้อความ
+            new_cat = st.radio(
                 "หมวดหมู่",
                 options=cat_options,
                 index=0,
                 key=f"cat_{idx}",
-                label_visibility="collapsed"
+                label_visibility="collapsed",
+                horizontal=True  # ปรับเป็น True เพื่อให้ตัวเลือกเรียงแนวนอน ไม่กินพื้นที่
             )
+
 
         # เก็บค่าเพื่อรอเซฟ
         pending_items_to_save.append({
