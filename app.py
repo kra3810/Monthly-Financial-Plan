@@ -392,15 +392,16 @@ if transactions:
             new_note = st.text_input("หมายเหตุ", value=t.get('หมายเหตุ', ''), key=f"note_{idx}", label_visibility="collapsed")
         with col4:
             cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
+            # ใช้ current_cat เป็นค่าเริ่มต้นเพื่อให้ปุ่มเลือกตัวนั้นไว้ตั้งแต่เปิดหน้าจอ
+            current_cat = t.get("หมวดหมู่", "รอดำเนินการ")
             
-            # เปลี่ยนมาใช้ st.radio เพื่อตัดปัญหาเรื่องการพิมพ์/แก้ไขข้อความ
-            new_cat = st.radio(
+            new_cat = st.segmented_control(
                 "หมวดหมู่",
                 options=cat_options,
-                index=0,
+                selection_mode="single",
+                default=current_cat,
                 key=f"cat_{idx}",
-                label_visibility="collapsed",
-                horizontal=True  # ปรับเป็น True เพื่อให้ตัวเลือกเรียงแนวนอน ไม่กินพื้นที่
+                label_visibility="collapsed"
             )
 
 
