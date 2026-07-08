@@ -486,15 +486,20 @@ if transactions:
                 "amt": st.session_state.get(f"s_amt_{idx}")
             }
 
-        # --- แล้วค่อย append ต่อท้าย ---
+        # เก็บค่าเตรียมบันทึกแบบรวมก้อนเดียวจบ
         pending_items_to_save.append({
             "sheet_row": t["sheet_row"],
-            "is_split": (new_cat == "แยกบิล"),
             "edit_amt": t["จำนวนเงิน"],
             "edit_cat": new_cat,
             "edit_note": new_note,
-            "split_details": split_details
+            "is_split": (new_cat == "แยกบิล"),
+            "split_vals": {
+                "kin": st.session_state.get(f"kin_{idx}", 0.0),
+                "suan": st.session_state.get(f"suan_{idx}", 0.0),
+                "other": st.session_state.get(f"other_{idx}", 0.0)
+            } if new_cat == "แยกบิล" else None
         })
+
 
 
 
