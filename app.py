@@ -583,6 +583,7 @@ if st.button("💾 บันทึกข้อมูลทั้งหมด", t
             if food_in > 0: new_rows_append.append([time_stamp, food_in, "ค่ากิน", manual_note])
             if pers_in > 0: new_rows_append.append([time_stamp, pers_in, "ค่าใช้จ่ายส่วนตัว", manual_note])
             if oth_in > 0: new_rows_append.append([time_stamp, oth_in, "ค่าอื่นๆ", manual_note])
+        st.session_state.manual_note = ""
 
         # --- 3. บันทึกเข้า Google Sheets ---
         if batch_updates or insert_rows_data or new_rows_append:
@@ -605,7 +606,6 @@ if st.button("💾 บันทึกข้อมูลทั้งหมด", t
                         sheet.batch_update([{'range': f'A{next_row}:D{end_row}', 'values': new_rows_append}], value_input_option='USER_ENTERED')
 
                 st.success("✅ บันทึกข้อมูลทั้งหมดเรียบร้อยแล้ว!")
-                st.session_state.manual_note = ""
                 st.rerun()
             except Exception as e:
                 st.error(f"เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheets: {e}")
