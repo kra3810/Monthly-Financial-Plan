@@ -385,13 +385,29 @@ total_bills = len(transactions)
 total_amount = sum(t["จำนวนเงิน"] for t in transactions)
 
 st.markdown(
-    f"<div style='color: #888888; font-size: 14px; margin-top: -10px; margin-bottom: 20px;'>"
+    f"<div style='color: #888888; font-size: 14px; margin-top: -10px; margin-bottom: 10px;'>"
     f"รายการรอดำเนินการ <span style='color: var(--text-color); font-weight: bold; font-size: 16px;'>{total_bills}</span> บิล | "
     f"ยอดรวม <span style='color: var(--text-color); font-weight: bold; font-size: 16px;'>{total_amount:,.2f}</span> บาท"
     f"</div>", 
     unsafe_allow_html=True
 )
 
+# --- เพิ่มโค้ดสถานะงบตรงนี้ (ดึงตัวแปรเดิมมาใช้ได้เลย) ---
+# ใส่ emoji ตามสี (แดง=ไฟ, เขียว=ติ๊กถูก)
+food_icon = "🔥" if food_color == "red" else "✅"
+pers_icon = "🔥" if pers_color == "red" else "✅"
+oth_icon  = "🔥" if oth_color == "red" else "✅"
+
+# วางเรียง 3 คอลัมน์ให้ดูง่ายๆ ไม่กินที่
+c1, c2, c3 = st.columns(3)
+with c1:
+    st.markdown(f"🍔 **ค่ากิน:** :{food_color}[{food_remain_text}] {food_icon}")
+with c2:
+    st.markdown(f"🛍️ **ส่วนตัว:** :{pers_color}[{pers_remain_text}] {pers_icon}")
+with c3:
+    st.markdown(f"📦 **อื่นๆ:** :{oth_color}[{oth_remain_text}] {oth_icon}")
+
+st.markdown("<hr style='margin-top: 10px; margin-bottom: 15px; border-top: 1px dashed #e0e0e0;'>", unsafe_allow_html=True)
 
 
 # --- 2. แสดงผลรายการ ---
