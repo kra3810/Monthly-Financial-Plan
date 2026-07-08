@@ -504,11 +504,19 @@ else:
 
 st.write("")
 
+# เพิ่มตัวแปรนับรอบ (รันครั้งแรกให้เป็น 0)
+if "note_key_counter" not in st.session_state:
+    st.session_state.note_key_counter = 0
+
+# 2. ฟอร์มบันทึกเพิ่ม
 with st.expander("➕ บันทึกรายจ่ายใหม่แบบกรอกเอง (Manual Input)"):
     food_in = st.number_input(f"ค่ากิน - :{food_color}[{food_remain_text}]", min_value=0.0, step=1.0)
     pers_in = st.number_input(f"ใช้ส่วนตัว - :{pers_color}[{pers_remain_text}]", min_value=0.0, step=1.0)
     oth_in  = st.number_input(f"อื่นๆ - :{oth_color}[{oth_remain_text}]", min_value=0.0, step=1.0)
-    note = st.text_input("หมายเหตุ (หากไม่ใส่ ระบบจะบันทึกเป็น '-')", key="manual_note")
+    
+    # เปลี่ยนชื่อ key ให้บวกเลข counter ห้อยท้ายไว้
+    note = st.text_input("หมายเหตุ (หากไม่ใส่ ระบบจะบันทึกเป็น '-')", key=f"manual_note_{st.session_state.note_key_counter}")
+
 
 st.write("")
 
@@ -606,8 +614,8 @@ if st.button("💾 บันทึกข้อมูลทั้งหมด", t
 
                 st.success("✅ บันทึกข้อมูลทั้งหมดเรียบร้อยแล้ว!")
                 
-                # ล้างค่าแค่ช่องหมายเหตุตัวเดียว
-                st.session_state.manual_note = ""
+                # พอเลขเปลี่ยน ชื่อ key จะเปลี่ยน ทำให้ Streamlit ล้างค่าช่องหมายเหตุให้ใหม่หมดจด
+                st.session_state.note_key_counter += 1
                 
                 st.rerun()
 
