@@ -405,13 +405,25 @@ if transactions:
 
         # --- ส่วนแสดงช่องกรอกแยกบิล (วางไว้ใต้แถว) ---
         if new_cat == "แยกบิล":
-            c1, c2, c3 = st.columns(3)
+            # เพิ่ม spacer (0.5) ไว้หน้าสุด เพื่อดันช่องกรอกให้ร่นเข้าไปทางขวา
+            spacer, c1, c2, c3 = st.columns([0.5, 1, 1, 1])
+            
+            with spacer:
+                # สัญลักษณ์ลูกศรสีเทา ชี้ให้เห็นว่าเป็นส่วนย่อยของบรรทัดบน
+                st.markdown("<h4 style='text-align: right; color: gray; margin-top: 30px;'>↳</h4>", unsafe_allow_html=True)
+                
             with c1:
-                st.number_input("ค่ากิน", key=f"kin_{idx}", value=0.0)
+                st.caption("ค่ากิน") # ใช้ caption แทน label ปกติ เพื่อให้ตัวหนังสือเล็กลง
+                st.number_input("ค่ากิน", key=f"kin_{idx}", value=0.0, label_visibility="collapsed")
+                
             with c2:
-                st.number_input("ค่าใช้จ่ายส่วนตัว", key=f"suan_{idx}", value=0.0)
+                st.caption("ค่าใช้จ่ายส่วนตัว")
+                st.number_input("ค่าใช้จ่ายส่วนตัว", key=f"suan_{idx}", value=0.0, label_visibility="collapsed")
+                
             with c3:
-                st.number_input("ค่าอื่นๆ", key=f"other_{idx}", value=0.0)
+                st.caption("ค่าอื่นๆ")
+                st.number_input("ค่าอื่นๆ", key=f"other_{idx}", value=0.0, label_visibility="collapsed")
+
 
 
         # เคลียร์ตัวแปรให้พร้อม
