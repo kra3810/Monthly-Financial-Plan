@@ -405,35 +405,37 @@ if transactions:
 
         # --- ส่วนแสดงช่องกรอกแยกบิล (วางไว้ใต้แถว) ---
         if new_cat == "แยกบิล":
-            # 1. แทรก CSS ซ่อนปุ่ม + - ของ number_input ทั้งหมด (ทำให้เหมือนช่องกรอกปกติ)
-            st.markdown("""
-                <style>
-                input[type=number]::-webkit-inner-spin-button, 
-                input[type=number]::-webkit-outer-spin-button { 
-                    -webkit-appearance: none; 
-                    margin: 0; 
-                }
-                </style>
-            """, unsafe_allow_html=True)
-            
-            # 2. ปรับสัดส่วนคอลัมน์ให้ช่องเล็กลงเหมือนเดิม (ใช้ end_spacer บีบด้านขวา)
-            spacer, c1, c2, c3, end_spacer = st.columns([0.8, 1, 1, 1, 0.5])
+            # ปรับสัดส่วนคอลัมน์ เพิ่ม c4 สำหรับแสดงยอดรวมและการแจ้งเตือน
+            spacer, c1, c2, c3, c4 = st.columns([0.5, 1, 1, 1, 1.5])
             
             with spacer:
-                # เอา margin-top ออก เพื่อไม่ให้เกิดระยะห่างส่วนเกิน
                 st.markdown("<h4 style='text-align: right; color: gray;'>↳</h4>", unsafe_allow_html=True)
                 
             with c1:
                 st.caption("ค่ากิน")
-                st.number_input("ค่ากิน", value=0.0, key=f"kin_{idx}", label_visibility="collapsed")
+                kin = st.number_input("ค่ากิน", value=0.0, key=f"kin_{idx}", label_visibility="collapsed")
                 
             with c2:
                 st.caption("ค่าใช้จ่ายส่วนตัว")
-                st.number_input("ค่าใช้จ่ายส่วนตัว", value=0.0, key=f"suan_{idx}", label_visibility="collapsed")
+                suan = st.number_input("ค่าใช้จ่ายส่วนตัว", value=0.0, key=f"suan_{idx}", label_visibility="collapsed")
                 
             with c3:
                 st.caption("ค่าอื่นๆ")
-                st.number_input("ค่าอื่นๆ", value=0.0, key=f"other_{idx}", label_visibility="collapsed")
+                other = st.number_input("ค่าอื่นๆ", value=0.0, key=f"other_{idx}", label_visibility="collapsed")
+            
+            # --- ส่วนตรวจสอบยอดรวม ---
+            with c4:
+                st.caption("สถานะยอดแยก")
+                total_split = kin + suan + other
+                bill_amount = t["จำนวนเงิน"] # ดึงยอดรวมของบิลนี้มาเทียบ
+                
+                # แสดงผลรวมและคำเตือน
+                if total_split > bill_amount:
+                    st.markdown(f"<div style='color: red; font-size: 14px; margin-top: 5px;'>⚠️ เกินไป {total_split - bill_amount:,.2f}</div>", unsafe_allow_html=True)
+                elif total_split < bill_amount:
+                    st.markdown(f"<div style='color: orange; font-size: 14px; margin-top: 5px;'>⚠️ ขาดอีก {bill_amount - total_split:,.2f}</div>", unsafe_allow_html=True)
+                else:
+                    st.markdown(f"<div style='color: green; font-size: 14px; margin-top: 5px;'>✅ พอดีเป๊ะ</div>", unsafe_allow_html=True)
 
         # เคลียร์ตัวแปรให้พร้อม
         split_data = None
