@@ -538,36 +538,36 @@ if st.button("💾 บันทึกข้อมูลทั้งหมด", t
             row_num = item["sheet_row"]
             # จัดการให้ใส่ "-" ถ้าระบุหมายเหตุว่างเปล่า 
             final_note = item["edit_note"].strip() if item["edit_note"].strip() else "-"
-            
+
             if item["is_split"]:
                 splits = []
                 if item["split_vals"]["kin"] > 0: splits.append((item["split_vals"]["kin"], "ค่ากิน"))
                 if item["split_vals"]["suan"] > 0: splits.append((item["split_vals"]["suan"], "ค่าใช้จ่ายส่วนตัว"))
                 if item["split_vals"]["other"] > 0: splits.append((item["split_vals"]["other"], "ค่าอื่นๆ"))
-                
+
                 if splits:
                     # ถ้าไม่ได้กรอกหมายเหตุ จะแสดงแค่ (แยกบิล) แต่ถ้ากรอกจะต่อท้ายให้
                     split_note = f"{final_note} (แยกบิล)" if final_note != "-" else "(แยกบิล)"
-                    
+
                     # ยอดแรก -> อัปเดตทับบรรทัดเดิม
                     first_amt, first_cat = splits[0]
                     batch_updates.append({
                         'range': f'B{row_num}:D{row_num}',
                         'values': [[first_amt, first_cat, split_note]]
                     })
-                    
+
                     # ยอดที่เหลือ -> เตรียมข้อมูลไว้ "แทรกแถว" ใต้บรรทัดเดิม (row_num + 1)
                     original_date = item["edit_date"]
                     rows_to_insert = []
                     for amt, cat in splits[1:]:
                         rows_to_insert.append([original_date, amt, cat, split_note])
-                    
+
                     if rows_to_insert:
                         insert_rows_data.append({
                             "insert_at": row_num + 1,
                             "values": rows_to_insert
                         })
-                        
+
             elif item["edit_cat"] != "รอดำเนินการ":
                 # กรณีเปลี่ยนหมวดธรรมดา (ไม่ได้แยกบิล) ใช้ final_note ที่มี "-" แล้ว
                 batch_updates.append({
@@ -583,7 +583,6 @@ if st.button("💾 บันทึกข้อมูลทั้งหมด", t
             if food_in > 0: new_rows_append.append([time_stamp, food_in, "ค่ากิน", manual_note])
             if pers_in > 0: new_rows_append.append([time_stamp, pers_in, "ค่าใช้จ่ายส่วนตัว", manual_note])
             if oth_in > 0: new_rows_append.append([time_stamp, oth_in, "ค่าอื่นๆ", manual_note])
-        st.session_state.manual_note = ""
 
         # --- 3. บันทึกเข้า Google Sheets ---
         if batch_updates or insert_rows_data or new_rows_append:
@@ -592,12 +591,12 @@ if st.button("💾 บันทึกข้อมูลทั้งหมด", t
                     # 3.1 อัปเดตบรรทัดเดิมทั้งหมดก่อน (ทำก่อนที่แถวในชีตจะเลื่อน)
                     if batch_updates:
                         sheet.batch_update(batch_updates, value_input_option='USER_ENTERED')
-                        
+
                     # 3.2 แทรกบรรทัดใหม่จากล่างขึ้นบน 
                     for insert_action in insert_rows_data:
                         # ใช้ฟังก์ชัน insert_rows ของ gspread 
                         sheet.insert_rows(insert_action["values"], row=insert_action["insert_at"], value_input_option='USER_ENTERED')
-                        
+
                     # 3.3 เพิ่มแถวต่อท้ายสำหรับ Manual Input
                     if new_rows_append:
                         col_a_data = sheet.col_values(1)
@@ -606,15 +605,21 @@ if st.button("💾 บันทึกข้อมูลทั้งหมด", t
                         sheet.batch_update([{'range': f'A{next_row}:D{end_row}', 'values': new_rows_append}], value_input_option='USER_ENTERED')
 
                 st.success("✅ บันทึกข้อมูลทั้งหมดเรียบร้อยแล้ว!")
+                
+                # --- [ย้ายมาไว้ตรงนี้] ล้างค่าในช่องกรอก Manual Input ทั้งหมดหลังบันทึกสำเร็จ ---
+                st.session_state.manual_food = 0.0
+                st.session_state.manual_pers = 0.0
+                st.session_state.manual_oth = 0.0
+                st.session_state.manual_note = ""
+                
                 st.rerun()
             except Exception as e:
                 st.error(f"เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheets: {e}")
         else:
             st.warning("⚠️ ไม่มีข้อมูลการเปลี่ยนแปลงหรือรายจ่ายใหม่เพื่อบันทึก")
 
-
 st.markdown("---")
-# =====================================================================
+
 
 
 
