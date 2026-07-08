@@ -462,44 +462,10 @@ if transactions:
                 else:
                     st.markdown(f"<div style='color: green; font-size: 14px; margin-top: 5px;'>✅ พอดีเป๊ะ</div>", unsafe_allow_html=True)
 
-        # เคลียร์ตัวแปรให้พร้อม
-        split_data = None
-        if new_cat == "แยกบิล":
-            # ดึงค่าจากช่องกรอกที่เพิ่งสร้าง
-            split_data = {
-                "amt1": st.session_state.get(f"s1_{idx}", 0),
-                "amt2": st.session_state.get(f"s2_{idx}", 0)
-            }
-
-        # เก็บค่าเข้า list
-        pending_items_to_save.append({
-            "sheet_row": t["sheet_row"],
-            "edit_cat": new_cat,
-            "is_split": (new_cat == "แยกบิล"),
-            # เก็บค่าแยกบิล (ถ้าไม่ได้แยกจะเป็น 0)
-            "split_vals": {
-                "kin": st.session_state.get(f"kin_{idx}", 0.0),
-                "suan": st.session_state.get(f"suan_{idx}", 0.0),
-                "other": st.session_state.get(f"other_{idx}", 0.0)
-            } if new_cat == "แยกบิล" else None
-        })
-
-
-
-                
-                # ถ้าเลือกแยกบิล ให้แสดงช่องกรอกข้างในป๊อปอัพ
-                # --- ก่อนบรรทัด append ให้ใส่แบบนี้ ---
-        split_details = None  # ประกาศค่าเริ่มต้นไว้ก่อน
-        
-        if new_cat == "แยกบิล":
-            split_details = {
-                "cat": st.session_state.get(f"s_cat_{idx}"),
-                "amt": st.session_state.get(f"s_amt_{idx}")
-            }
-
         # เก็บค่าเตรียมบันทึกแบบรวมก้อนเดียวจบ
         pending_items_to_save.append({
             "sheet_row": t["sheet_row"],
+            "edit_date": t["วันที่"], # จำวันที่เดิมไว้ใช้ตอนสร้างบรรทัดใหม่
             "edit_amt": t["จำนวนเงิน"],
             "edit_cat": new_cat,
             "edit_note": new_note,
@@ -510,10 +476,6 @@ if transactions:
                 "other": st.session_state.get(f"other_{idx}", 0.0)
             } if new_cat == "แยกบิล" else None
         })
-
-
-
-
 
 
         st.markdown("<div style='margin-bottom: 10px; border-bottom: 1px solid #f0f2f6;'></div>", unsafe_allow_html=True)
