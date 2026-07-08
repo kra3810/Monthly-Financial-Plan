@@ -420,13 +420,32 @@ if transactions:
             radio_key = f"radio_{idx}"
             # หมวดหมู่ทั้งหมด
             cat_options = ["รอดำเนินการ", "ค่ากิน", "ค่าใช้จ่ายส่วนตัว", "ค่าอื่นๆ", "แยกบิล"]
-            
+
             # ค่าปัจจุบัน
             current_val = st.session_state.get(radio_key, t.get("หมวดหมู่", "รอดำเนินการ"))
-            
-            # Popover สำหรับเลือกหมวด
-            with st.popover(current_val):
-                new_cat = st.radio("เลือกหมวดหมู่", cat_options, index=cat_options.index(current_val) if current_val in cat_options else 0, key=radio_key)
+
+            # --- เพิ่มโค้ดปรับเปลี่ยนสี/สัญลักษณ์ของปุ่มตามหมวดที่เลือก ---
+            if current_val == "ค่ากิน":
+                btn_label = "🟠 ค่ากิน"
+            elif current_val == "ค่าใช้จ่ายส่วนตัว":
+                btn_label = "🟢 ค่าใช้จ่ายส่วนตัว"
+            elif current_val == "ค่าอื่นๆ":
+                btn_label = "🔵 ค่าอื่นๆ"
+            elif current_val == "แยกบิล":
+                btn_label = "🟣 แยกบิล"
+            else:
+                btn_label = "⚪ รอดำเนินการ" # สียังไม่ดำเนินการ (เทา)
+
+            # Popover สำหรับเลือกหมวด (ใส่ btn_label ที่เปลี่ยนสีแล้วลงไป)
+            with st.popover(btn_label):
+                new_cat = st.radio(
+                    "เลือกหมวดหมู่", 
+                    cat_options, 
+                    index=cat_options.index(current_val) if current_val in cat_options else 0, 
+                    key=radio_key,
+                    label_visibility="collapsed" # ซ่อนคำว่า "เลือกหมวดหมู่" ข้างในป๊อปอัพไปเลยเพื่อความคลีน
+                )
+
 
         # --- ส่วนแสดงช่องกรอกแยกบิล (วางไว้ใต้แถว) ---
         if new_cat == "แยกบิล":
