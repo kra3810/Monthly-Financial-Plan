@@ -578,7 +578,7 @@ if st.button("💾 บันทึกข้อมูลทั้งหมด", t
         # จัดการข้อมูล Manual Input ให้เตรียมไปต่อท้ายสุด
         if food_in > 0 or pers_in > 0 or oth_in > 0:
             manual_note = note.strip() if note.strip() else "-"
-            bkk_tz = timezone(timedelta(hours=7))
+            bkk_tz = datetime.timezone(datetime.timedelta(hours=7))
             time_stamp = datetime.datetime.now(bkk_tz).strftime("%d/%m/%Y, %H:%M:%S")
             if food_in > 0: new_rows_append.append([time_stamp, food_in, "ค่ากิน", manual_note])
             if pers_in > 0: new_rows_append.append([time_stamp, pers_in, "ค่าใช้จ่ายส่วนตัว", manual_note])
