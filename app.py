@@ -404,7 +404,6 @@ with c2:
 with c3:
     st.markdown(f"อื่นๆ - :{oth_color}[{oth_remain_text}]")
 
-st.markdown("---") # เส้นคั่นบางๆ ปกติ
 
 
 
