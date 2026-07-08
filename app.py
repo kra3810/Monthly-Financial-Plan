@@ -392,8 +392,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- 1. สรุปยอด ---
-st.write(f"รายการรอดำเนินการ {total_bills} บิล | ยอดรวม {total_amount:,.2f} บาท")
+
 
 # --- 2. สถานะงบ (แบบคลีน ดึงจาก Manual Input เป๊ะๆ) ---
 c1, c2, c3 = st.columns(3)
