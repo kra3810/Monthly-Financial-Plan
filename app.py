@@ -605,6 +605,7 @@ if st.button("💾 บันทึกข้อมูลทั้งหมด", t
                         sheet.batch_update([{'range': f'A{next_row}:D{end_row}', 'values': new_rows_append}], value_input_option='USER_ENTERED')
 
                 st.success("✅ บันทึกข้อมูลทั้งหมดเรียบร้อยแล้ว!")
+                st.session_state.manual_note = ""
                 st.rerun()
             except Exception as e:
                 st.error(f"เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheets: {e}")
