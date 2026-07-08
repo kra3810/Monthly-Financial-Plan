@@ -498,42 +498,80 @@ st.write("")
 if st.button("💾 บันทึกข้อมูลทั้งหมด", type="primary", use_container_width=True):
     batch_updates = []
     new_rows = []
-    
-    # ตรวจสอบการอัปเดตรายการรอดำเนินการ
-    for item in pending_items_to_save:
-        if item["is_split"] or item["edit_cat"] != "รอดำเนินการ":
-            row_num = item["sheet_row"]
-            batch_updates.append({
-                'range': f'B{row_num}:D{row_num}',
-                'values': [[item["edit_amt"], item["edit_cat"], item["edit_note"]]]
-            })
-            
-    # ตรวจสอบการกรอกข้อมูลเพิ่มจากฟอร์ม Manual (ใช้ตัวแปรตามโค้ดเดิมของคุณ)
-    if food_in > 0 or pers_in > 0 or oth_in > 0:
-        final_note = note.strip() if note.strip() else "-"
-        time_stamp = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
-        if food_in > 0: new_rows.append([time_stamp, food_in, "ค่ากิน", final_note])
-        if pers_in > 0: new_rows.append([time_stamp, pers_in, "ค่าใช้จ่ายส่วนตัว", final_note])
-        if oth_in > 0: new_rows.append([time_stamp, oth_in, "ค่าอื่นๆ", final_note])
+    can_save = True
 
-    # ส่งข้อมูลเข้า Google Sheets พร้อมกันทีเดียว
-    if batch_updates or new_rows:
-        try:
-            with st.spinner("กำลังบันทึกข้อมูลทั้งหมด..."):
-                if batch_updates:
-                    sheet.batch_update(batch_updates, value_input_option='USER_ENTERED')
-                if new_rows:
-                    col_a_data = sheet.col_values(1)
-                    next_row = len(col_a_data) + 1
-                    end_row = next_row + len(new_rows) - 1
-                    sheet.batch_update([{'range': f'A{next_row}:D{end_row}', 'values': new_rows}], value_input_option='USER_ENTERED')
+    # --- 1. ตรวจสอบความถูกต้องก่อน (Validation) ---
+    for item in pending_items_to_save:
+        if item["is_split"]:
+            total_split = sum(item["split_vals"].values())
+            # ใช้ abs() เช็คส่วนต่างเพื่อป้องกันปัญหาทศนิยม
+            if abs(total_split - item["edit_amt"]) > 0.01: 
+                st.error(f"❌ รายการแถวที่ {item['sheet_row']} ยอดแยก ({total_split:,.2f}) ไม่เท่ากับยอดเดิม ({item['edit_amt']:,.2f}) กรุณาแก้ไขก่อนบันทึก")
+                can_save = False
+
+    # --- 2. จัดเตรียมข้อมูลเมื่อเงื่อนไขถูกต้องทั้งหมด ---
+    if can_save:
+        for item in pending_items_to_save:
+            row_num = item["sheet_row"]
             
-            st.success("✅ บันทึกข้อมูลทั้งหมดเรียบร้อยแล้ว!")
-            st.rerun()
-        except Exception as e:
-            st.error(f"เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheets: {e}")
-    else:
-        st.warning("⚠️ ไม่มีข้อมูลการเปลี่ยนแปลงหรือรายจ่ายใหม่เพื่อบันทึก")
+            if item["is_split"]:
+                # ดึงเฉพาะหมวดที่มียอด > 0
+                splits = []
+                if item["split_vals"]["kin"] > 0: splits.append((item["split_vals"]["kin"], "ค่ากิน"))
+                if item["split_vals"]["suan"] > 0: splits.append((item["split_vals"]["suan"], "ค่าใช้จ่ายส่วนตัว"))
+                if item["split_vals"]["other"] > 0: splits.append((item["split_vals"]["other"], "ค่าอื่นๆ"))
+                
+                if splits:
+                    base_note = item["edit_note"].strip() if item["edit_note"].strip() else "-"
+                    split_note = f"{base_note} (แยกบิล)"
+                    
+                    # ยอดแรก -> อัปเดตทับบรรทัดเดิม
+                    first_amt, first_cat = splits[0]
+                    batch_updates.append({
+                        'range': f'B{row_num}:D{row_num}',
+                        'values': [[first_amt, first_cat, split_note]]
+                    })
+                    
+                    # ยอดที่เหลือ -> สร้างเป็นบรรทัดใหม่ต่อท้ายตาราง โดยใช้วันที่เดิม
+                    original_date = item["edit_date"]
+                    for amt, cat in splits[1:]:
+                        new_rows.append([original_date, amt, cat, split_note])
+                        
+            elif item["edit_cat"] != "รอดำเนินการ":
+                # กรณีแค่เปลี่ยนหมวดหมู่ (ไม่ได้แยกบิล)
+                batch_updates.append({
+                    'range': f'B{row_num}:D{row_num}',
+                    'values': [[item["edit_amt"], item["edit_cat"], item["edit_note"]]]
+                })
+
+        # จัดการกรอกข้อมูลเพิ่มจากฟอร์ม Manual Input
+        if food_in > 0 or pers_in > 0 or oth_in > 0:
+            final_note = note.strip() if note.strip() else "-"
+            time_stamp = datetime.datetime.now().strftime("%d/%m/%Y, %H:%M:%S")
+            if food_in > 0: new_rows.append([time_stamp, food_in, "ค่ากิน", final_note])
+            if pers_in > 0: new_rows.append([time_stamp, pers_in, "ค่าใช้จ่ายส่วนตัว", final_note])
+            if oth_in > 0: new_rows.append([time_stamp, oth_in, "ค่าอื่นๆ", final_note])
+
+        # --- 3. บันทึกเข้า Google Sheets พร้อมกัน ---
+        if batch_updates or new_rows:
+            try:
+                with st.spinner("กำลังบันทึกข้อมูลทั้งหมด..."):
+                    # อัปเดตบรรทัดเดิม
+                    if batch_updates:
+                        sheet.batch_update(batch_updates, value_input_option='USER_ENTERED')
+                    # เพิ่มบรรทัดใหม่
+                    if new_rows:
+                        col_a_data = sheet.col_values(1)
+                        next_row = len(col_a_data) + 1
+                        end_row = next_row + len(new_rows) - 1
+                        sheet.batch_update([{'range': f'A{next_row}:D{end_row}', 'values': new_rows}], value_input_option='USER_ENTERED')
+
+                st.success("✅ บันทึกข้อมูลทั้งหมดเรียบร้อยแล้ว!")
+                st.rerun()
+            except Exception as e:
+                st.error(f"เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheets: {e}")
+        else:
+            st.warning("⚠️ ไม่มีข้อมูลการเปลี่ยนแปลงหรือรายจ่ายใหม่เพื่อบันทึก")
 
 st.markdown("---")
 # =====================================================================
