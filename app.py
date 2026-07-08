@@ -384,23 +384,22 @@ if len(data) >= 30:
 total_bills = len(transactions)
 total_amount = sum(t["จำนวนเงิน"] for t in transactions)
 
+st.markdown(
+    f"<div style='color: #888888; font-size: 14px; margin-top: -10px; margin-bottom: 20px;'>"
+    f"รายการรอดำเนินการ <span style='color: var(--text-color); font-weight: bold; font-size: 16px;'>{total_bills}</span> บิล | "
+    f"ยอดรวม <span style='color: var(--text-color); font-weight: bold; font-size: 16px;'>{total_amount:,.2f}</span> บาท"
+    f"</div>", 
+    unsafe_allow_html=True
+)
+
+
+
 # แสดงสถานะงบเป็นบรรทัดเดียวต่อกัน (ใช้ &nbsp; เพื่อเว้นวรรคให้ห่างกันนิดหน่อย)
 st.markdown(
     f"ค่ากิน - :{food_color}[{food_remain_text}] &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "
     f"ใช้ส่วนตัว - :{pers_color}[{pers_remain_text}] &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "
     f"อื่นๆ - :{oth_color}[{oth_remain_text}]"
 )
-
-
-
-# --- 2. สถานะงบ (แบบคลีน ดึงจาก Manual Input เป๊ะๆ) ---
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.markdown(f"ค่ากิน - :{food_color}[{food_remain_text}]")
-with c2:
-    st.markdown(f"ใช้ส่วนตัว - :{pers_color}[{pers_remain_text}]")
-with c3:
-    st.markdown(f"อื่นๆ - :{oth_color}[{oth_remain_text}]")
 
 
 
