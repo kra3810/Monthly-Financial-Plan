@@ -504,7 +504,6 @@ else:
 
 st.write("")
 
-# 2. ฟอร์มบันทึกเพิ่ม (ดึงโค้ดเดิมของคุณกลับมาใช้เป๊ะๆ ตามสั่ง) พับเก็บใน st.expander ต่อท้ายรายการรอดำเนินการทันที
 with st.expander("➕ บันทึกรายจ่ายใหม่แบบกรอกเอง (Manual Input)"):
     food_in = st.number_input(f"ค่ากิน - :{food_color}[{food_remain_text}]", min_value=0.0, step=1.0)
     pers_in = st.number_input(f"ใช้ส่วนตัว - :{pers_color}[{pers_remain_text}]", min_value=0.0, step=1.0)
@@ -512,6 +511,7 @@ with st.expander("➕ บันทึกรายจ่ายใหม่แบ�
     note = st.text_input("หมายเหตุ (หากไม่ใส่ ระบบจะบันทึกเป็น '-')", key="manual_note")
 
 st.write("")
+
 
 # 3. ปุ่มบันทึกข้อมูลทั้งหมด อยู่ล่างสุดตัวเดียว (ใต้กล่องบันทึกเพิ่ม)
 if st.button("💾 บันทึกข้อมูลทั้งหมด", type="primary", use_container_width=True):
@@ -604,15 +604,13 @@ if st.button("💾 บันทึกข้อมูลทั้งหมด", t
                         end_row = next_row + len(new_rows_append) - 1
                         sheet.batch_update([{'range': f'A{next_row}:D{end_row}', 'values': new_rows_append}], value_input_option='USER_ENTERED')
 
-                st.success("✅ บันทึกข้อมูลทั้งหมดเรียบร้อยแล้ว!")
+                                st.success("✅ บันทึกข้อมูลทั้งหมดเรียบร้อยแล้ว!")
                 
-                # --- [ย้ายมาไว้ตรงนี้] ล้างค่าในช่องกรอก Manual Input ทั้งหมดหลังบันทึกสำเร็จ ---
-                st.session_state.manual_food = 0.0
-                st.session_state.manual_pers = 0.0
-                st.session_state.manual_oth = 0.0
+                # ล้างค่าแค่ช่องหมายเหตุตัวเดียว
                 st.session_state.manual_note = ""
                 
                 st.rerun()
+
             except Exception as e:
                 st.error(f"เกิดข้อผิดพลาดในการเชื่อมต่อ Google Sheets: {e}")
         else:
