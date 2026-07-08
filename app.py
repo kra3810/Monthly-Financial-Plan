@@ -359,7 +359,21 @@ oth_color  = "green" if (budget_other - used_other) >= 0 else "red"
 
 # =====================================================================
 # --- จัดการรายจ่าย (รอดำเนินการ + บันทึกเพิ่ม) แบบรวมปุ่มเดียว ---
-st.subheader("📝 จัดการรายจ่ายประจำเดือน")
+st.subheader("📝 จัดการรายจ่ายประจำเดือน") # (บรรทัดเดิมที่คุณมีอยู่แล้ว)
+
+# --- เพิ่มโค้ดส่วนสรุปยอดตรงนี้ ---
+# หมายเหตุ: เปลี่ยนคำว่า 'data' เป็นชื่อตัวแปรรายการบิลที่คุณใช้ (เช่น df, records, transactions)
+total_bills = len(data)
+total_amount = sum(item["จำนวนเงิน"] for item in data)
+
+# แสดงผลแบบคลีนๆ และดึงให้ชิดหัวข้อด้วย margin-top ติดลบ
+st.markdown(
+    f"<div style='color: #888888; font-size: 14px; margin-top: -10px; margin-bottom: 20px;'>"
+    f"รายการทั้งหมด {total_bills} บิล | ยอดรวม {total_amount:,.2f} บาท"
+    f"</div>", 
+    unsafe_allow_html=True
+)
+
 
 # --- 1. เตรียมข้อมูลรายการ (กรองเฉพาะ "รอดำเนินการ") ---
 pending_items_to_save = []
