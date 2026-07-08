@@ -604,7 +604,7 @@ if st.button("💾 บันทึกข้อมูลทั้งหมด", t
                         end_row = next_row + len(new_rows_append) - 1
                         sheet.batch_update([{'range': f'A{next_row}:D{end_row}', 'values': new_rows_append}], value_input_option='USER_ENTERED')
 
-                                st.success("✅ บันทึกข้อมูลทั้งหมดเรียบร้อยแล้ว!")
+                st.success("✅ บันทึกข้อมูลทั้งหมดเรียบร้อยแล้ว!")
                 
                 # ล้างค่าแค่ช่องหมายเหตุตัวเดียว
                 st.session_state.manual_note = ""
