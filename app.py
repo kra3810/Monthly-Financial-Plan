@@ -386,10 +386,12 @@ total_amount = sum(t["จำนวนเงิน"] for t in transactions)
 
 st.markdown(
     f"<div style='color: #888888; font-size: 14px; margin-top: -10px; margin-bottom: 20px;'>"
-    f"รายการรอดำเนินการ {total_bills} บิล | ยอดรวม {total_amount:,.2f} บาท"
+    f"รายการรอดำเนินการ <span style='color: var(--text-color); font-weight: bold; font-size: 16px;'>{total_bills}</span> บิล | "
+    f"ยอดรวม <span style='color: var(--text-color); font-weight: bold; font-size: 16px;'>{total_amount:,.2f}</span> บาท"
     f"</div>", 
     unsafe_allow_html=True
 )
+
 
 
 # --- 2. แสดงผลรายการ ---
