@@ -392,22 +392,39 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- เพิ่มโค้ดสถานะงบตรงนี้ (ดึงตัวแปรเดิมมาใช้ได้เลย) ---
-# ใส่ emoji ตามสี (แดง=ไฟ, เขียว=ติ๊กถูก)
+# --- โค้ดสรุปยอดและสถานะ (แบบใหม่ จัดวางในกล่องเดียวให้ดูคลีน) ---
+# กำหนดไอคอน
 food_icon = "🔥" if food_color == "red" else "✅"
 pers_icon = "🔥" if pers_color == "red" else "✅"
 oth_icon  = "🔥" if oth_color == "red" else "✅"
 
-# วางเรียง 3 คอลัมน์ให้ดูง่ายๆ ไม่กินที่
-c1, c2, c3 = st.columns(3)
-with c1:
-    st.markdown(f"🍔 **ค่ากิน:** :{food_color}[{food_remain_text}] {food_icon}")
-with c2:
-    st.markdown(f"🛍️ **ส่วนตัว:** :{pers_color}[{pers_remain_text}] {pers_icon}")
-with c3:
-    st.markdown(f"📦 **อื่นๆ:** :{oth_color}[{oth_remain_text}] {oth_icon}")
+# กำหนดรหัสสีให้ตรงกับ Theme (แดง/เขียว)
+c_food = "#ff4b4b" if food_color == "red" else "#21c354"
+c_pers = "#ff4b4b" if pers_color == "red" else "#21c354"
+c_oth  = "#ff4b4b" if oth_color == "red" else "#21c354"
 
-st.markdown("<hr style='margin-top: 10px; margin-bottom: 15px; border-top: 1px dashed #e0e0e0;'>", unsafe_allow_html=True)
+# สร้าง UI แบบรวมกล่อง
+st.markdown(
+    f"""
+    <div style='margin-top: -10px; margin-bottom: 25px;'>
+        <div style='color: #888888; font-size: 14px; margin-bottom: 10px;'>
+            รายการรอดำเนินการ <span style='color: var(--text-color); font-weight: bold; font-size: 16px;'>{total_bills}</span> บิล | 
+            ยอดรวม <span style='color: var(--text-color); font-weight: bold; font-size: 16px;'>{total_amount:,.2f}</span> บาท
+        </div>
+        
+        <div style='display: flex; flex-wrap: wrap; gap: 20px; background-color: rgba(128, 128, 128, 0.1); padding: 12px 15px; border-radius: 8px; font-size: 14px;'>
+            <div>🍔 <b>ค่ากิน:</b> <span style='color: {c_food};'>{food_remain_text} {food_icon}</span></div>
+            <div>🛍️ <b>ส่วนตัว:</b> <span style='color: {c_pers};'>{pers_remain_text} {pers_icon}</span></div>
+            <div>📦 <b>อื่นๆ:</b> <span style='color: {c_oth};'>{oth_remain_text} {oth_icon}</span></div>
+        </div>
+    </div>
+    """, 
+    unsafe_allow_html=True
+)
+
+# เริ่มลูปแสดงรายการบิล...
+# if transactions:
+#     for idx, t in enumerate(transactions):
 
 
 # --- 2. แสดงผลรายการ ---
