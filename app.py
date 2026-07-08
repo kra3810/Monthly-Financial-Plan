@@ -405,30 +405,35 @@ if transactions:
 
         # --- ส่วนแสดงช่องกรอกแยกบิล (วางไว้ใต้แถว) ---
         if new_cat == "แยกบิล":
-            # ดึงให้ชิดขึ้นด้วย CSS margin-top ติดลบ
-            st.markdown("<div style='margin-top: -25px;'></div>", unsafe_allow_html=True)
+            # 1. แทรก CSS ซ่อนปุ่ม + - ของ number_input ทั้งหมด (ทำให้เหมือนช่องกรอกปกติ)
+            st.markdown("""
+                <style>
+                input[type=number]::-webkit-inner-spin-button, 
+                input[type=number]::-webkit-outer-spin-button { 
+                    -webkit-appearance: none; 
+                    margin: 0; 
+                }
+                </style>
+            """, unsafe_allow_html=True)
             
-            # ปรับสัดส่วนคอลัมน์ให้ช่องเล็กลง (เพิ่ม space ด้านหลังเพื่อบีบให้แคบลง)
+            # 2. ปรับสัดส่วนคอลัมน์ให้ช่องเล็กลงเหมือนเดิม (ใช้ end_spacer บีบด้านขวา)
             spacer, c1, c2, c3, end_spacer = st.columns([0.8, 1, 1, 1, 0.5])
             
             with spacer:
-                st.markdown("<h4 style='text-align: right; color: gray; margin-top: 25px;'>↳</h4>", unsafe_allow_html=True)
+                # เอา margin-top ออก เพื่อไม่ให้เกิดระยะห่างส่วนเกิน
+                st.markdown("<h4 style='text-align: right; color: gray;'>↳</h4>", unsafe_allow_html=True)
                 
             with c1:
                 st.caption("ค่ากิน")
-                # ใช้ text_input แทนเพื่อตัดปุ่ม + - ออก
-                st.text_input("ค่ากิน", value="0", key=f"kin_{idx}", label_visibility="collapsed")
+                st.number_input("ค่ากิน", value=0.0, key=f"kin_{idx}", label_visibility="collapsed")
                 
             with c2:
                 st.caption("ค่าใช้จ่ายส่วนตัว")
-                st.text_input("ค่าใช้จ่ายส่วนตัว", value="0", key=f"suan_{idx}", label_visibility="collapsed")
+                st.number_input("ค่าใช้จ่ายส่วนตัว", value=0.0, key=f"suan_{idx}", label_visibility="collapsed")
                 
             with c3:
                 st.caption("ค่าอื่นๆ")
-                st.text_input("ค่าอื่นๆ", value="0", key=f"other_{idx}", label_visibility="collapsed")
-
-
-
+                st.number_input("ค่าอื่นๆ", value=0.0, key=f"other_{idx}", label_visibility="collapsed")
 
         # เคลียร์ตัวแปรให้พร้อม
         split_data = None
