@@ -629,53 +629,66 @@ st.markdown("---")
 
 
 
-# --- 5. ตรวจสอบเงินในมือ (เพิ่มใหม่แบบแก้ไขได้) ---
-st.subheader("💵 ตรวจสอบเงินในมือ")
+# --- 5. ตรวจสอบสมดุลบัญชี (ปรับ UI ใหม่) ---
+st.markdown("### ⚖️ ตรวจสอบสมดุลบัญชี")
 
-# 1. ดึงค่าจาก Google Sheets (F5 = เงินโอน, F6 = เงินสด) มารวดเดียว
+# 1. ดึงค่าจาก Google Sheets
 f_vals = sheet.get("F5:F6")
+try: bank_from_f5 = float(str(f_vals[0][0]).replace(',', '')) if len(f_vals) > 0 and len(f_vals[0]) > 0 else 0.0
+except: bank_from_f5 = 0.0
 
-try:
-    bank_from_f5 = float(str(f_vals[0][0]).replace(',', '')) if len(f_vals) > 0 and len(f_vals[0]) > 0 else 0.0
-except:
-    bank_from_f5 = 0.0
+try: cash_from_f6 = float(str(f_vals[1][0]).replace(',', '')) if len(f_vals) > 1 and len(f_vals[1]) > 0 else 0.0
+except: cash_from_f6 = 0.0
 
-try:
-    cash_from_f6 = float(str(f_vals[1][0]).replace(',', '')) if len(f_vals) > 1 and len(f_vals[1]) > 0 else 0.0
-except:
-    cash_from_f6 = 0.0
-
-# 2. กำหนด Key สำหรับช่องกรอกข้อมูล
 c_key = f"cash_{selected_month}"
 b_key = f"bank_{selected_month}"
 
-# 3. ยึดค่าเริ่มต้นจาก F6 และ F5 
 if c_key not in st.session_state: st.session_state[c_key] = str(cash_from_f6)
 if b_key not in st.session_state: st.session_state[b_key] = str(bank_from_f5)
 
-col_cash1, col_cash2 = st.columns(2)
-with col_cash1:
-    # แก้เป้าหมายการบันทึก (args) ให้ชี้ไปที่ F6
-    st.text_input("เงินสด (พิมพ์แล้วกด Enter)", key=c_key, on_change=auto_update, args=(c_key, 'F6'))
-with col_cash2:
-    # แก้เป้าหมายการบันทึก (args) ให้ชี้ไปที่ F5
-    st.text_input("เงินโอน (พิมพ์แล้วกด Enter)", key=b_key, on_change=auto_update, args=(b_key, 'F5'))
-
-try: cash_val = float(st.session_state[c_key])
+# ป้องกัน Error กรณีเผลอพิมพ์ลูกน้ำ (,) ลงในช่อง
+try: cash_val = float(str(st.session_state[c_key]).replace(',', ''))
 except: cash_val = cash_from_f6
 
-try: bank_val = float(st.session_state[b_key])
+try: bank_val = float(str(st.session_state[b_key]).replace(',', ''))
 except: bank_val = bank_from_f5
 
 new_actual_total = cash_val + bank_val
 expected_cash = remaining_balance
 diff = new_actual_total - expected_cash
 
-col_tot1, col_tot2 = st.columns(2)
-with col_tot1:
-    st.metric("เงินที่มีจริงตอนนี้", f"{new_actual_total:,.2f} ฿")
-with col_tot2:
-    st.metric("ส่วนต่าง", f"{diff:,.2f} ฿", delta=float(diff))
+# --- โซน 1: สรุปตัวเลขแบบ Dashboard ให้เห็นชัดๆ ---
+col_dash1, col_dash2, col_dash3 = st.columns(3)
+with col_dash1:
+    st.metric("📊 เงินในระบบ (ควรมี)", f"{expected_cash:,.2f} ฿")
+with col_dash2:
+    st.metric("💰 เงินที่มีจริง (โอน+สด)", f"{new_actual_total:,.2f} ฿")
+with col_dash3:
+    st.metric("🚨 ส่วนต่าง", f"{diff:,.2f} ฿", delta=float(diff))
+
+# --- โซน 2: วิเคราะห์ส่วนต่างอัจฉริยะ (โผล่เฉพาะเมื่อยอดไม่ตรง) ---
+if abs(diff) > 0.01:
+    st.write("") # เว้นบรรทัดนิดนึงให้สบายตา
+    if diff < 0:
+        st.error(f"⚠️ เงินหายไป **{abs(diff):,.2f} ฿** (อาจมีรายจ่ายตกหล่นที่เราไม่ได้จด หรือระบบดักจับไม่ทัน)")
+    else:
+        st.warning(f"⚠️ เงินเกินมา **{abs(diff):,.2f} ฿** (อาจจดรายจ่ายเบิ้ล หรือมีเงินโอนเข้าบัญชี)")
+else:
+    st.write("")
+    st.success("✅ ยอดเงินตรงเป๊ะ! ระบบบัญชีสมบูรณ์แบบ")
+
+st.write("") # เว้นบรรทัดก่อนเข้าโซนกรอกข้อมูล
+
+# --- โซน 3: กล่องกรอกข้อมูลอัปเดตยอดเงิน ---
+with st.container():
+    st.markdown("**อัปเดตยอดเงินในมือ (พิมพ์ตัวเลขแล้วกด Enter)**")
+    col_in1, col_in2 = st.columns(2)
+    with col_in1:
+        st.text_input("💵 เงินสด (F6)", key=c_key, on_change=auto_update, args=(c_key, 'F6'))
+    with col_in2:
+        st.text_input("🏦 เงินโอน (F5)", key=b_key, on_change=auto_update, args=(b_key, 'F5'))
+
+st.markdown("---")
 
 # =====================================================================
 # --- กราฟสรุปรายจ่ายแบบ Dropdown (รวมครบทุกกราฟและเงินยกยอดหลายเดือน) ---
