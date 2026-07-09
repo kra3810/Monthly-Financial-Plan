@@ -36,7 +36,7 @@ try:
 
     st.query_params["month"] = selected_month
 
-    # =====================================================================
+# =====================================================================
     # --- ฟีเจอร์สร้างเดือนถัดไป ---
     parts = selected_month.split()
     if len(parts) == 2:
@@ -70,42 +70,42 @@ try:
                             acc_val = get_v(17, 1)    # เงินสะสม (B18)
                             emg_val = get_v(12, 1)    # เงินสำรองฉุกเฉิน (B13)
                             used_total = get_v(2, 1) + get_v(3, 1) + get_v(4, 1) # ยอดใช้จ่ายรวม
-                            carry_cash = get_v(10, 1) + get_v(11, 1) # เงินเหลือในมือ
-                            personal_inc = get_v(15, 5) # ดึงรายได้ส่วนตัวจาก F16 (Row 16->15, Col F->5)
+                            
+                            # ดึงยอดเงินจริงจาก F5 (เงินโอน) และ F6 (เงินสด) เพื่อใช้เป็นยอด Carry Cash
+                            bank_carry = get_v(4, 5) # แถว 5, คอลัมน์ F (Index: 4, 5)
+                            cash_carry = get_v(5, 5) # แถว 6, คอลัมน์ F (Index: 5, 5)
+                            carry_cash = bank_carry + cash_carry
+                            
+                            personal_inc = get_v(15, 5) # ดึงรายได้ส่วนตัวจาก F16 
 
                             # 2. บันทึกลงหน้า Summary_Data
                             try:
                                 summary_sheet = spreadsheet.worksheet("Summary_Data")
                             except:
-                                # ถ้าเผลอลบหน้า Summary ไป ให้ระบบสร้างใหม่ให้ (เพิ่มหัวข้อคอลัมน์ F)
                                 summary_sheet = spreadsheet.add_worksheet(title="Summary_Data", rows="100", cols="10")
                                 summary_sheet.append_row(["Month", "Accumulated", "Emergency", "Used", "Carry_Cash", "Personal_Income"])
 
-                            # เพิ่มตัวแปร personal_inc ไว้ท้ายสุด เพื่อให้บันทึกลงคอลัมน์ F (คอลัมน์ที่ 6)
                             summary_sheet.append_row([selected_month, acc_val, emg_val, used_total, carry_cash, personal_inc])
 
-                            # 3. ขึ้นเดือนใหม่ (แก้ไขเพื่อรักษาสูตร B24 และส่งยอดไป F4)
+                            # 3. ขึ้นเดือนใหม่
                             spreadsheet.duplicate_sheet(source_sheet_id=prev_sheet.id, new_sheet_name=next_month_name)
                             new_sheet = spreadsheet.worksheet(next_month_name)
 
-                            # เอา B3, B4, B5 ออก เพื่อป้องกันไม่ให้ไปเขียนทับสูตร SUMIFS ตัวใหม่ด้านบน
                             updates = [
                                 {'range': 'F2', 'values': [[0]]},   # รีเซ็ตเงินที่รับจากบ้านเป็น 0
-                                {'range': 'B11', 'values': [[0]]},  # รีเซ็ตเงินสดในมือ
-                                {'range': 'B12', 'values': [[0]]},  # รีเซ็ตเงินโอน
-                                {'range': 'F4', 'values': [[carry_cash]]}, # นำเงินเหลือมาใส่ F4
+                                {'range': 'B11', 'values': [[0]]},  # รีเซ็ตช่องเก่า (ปล่อยไว้กันเหนียว)
+                                {'range': 'B12', 'values': [[0]]},  
+                                {'range': 'F4', 'values': [[carry_cash]]}, # นำเงินรวม (F5+F6) มาใส่ F4 เพื่อเป็นเป้ายอดเดือนใหม่
                                 {'range': 'F16', 'values': [[0]]},   # รีเซ็ตช่องรายได้ส่วนตัวเป็น 0
                                 {'range': 'C26', 'values': [['']]}  # ล้างค่า C26 ให้ว่างเปล่า
+                                # *** สังเกตว่าไม่มีคำสั่งล้าง F5, F6 เงินในบัญชีจึงถูกยกยอดไปเดือนใหม่ตามจริงเป๊ะๆ ***
                             ]
                             new_sheet.batch_update(updates)
 
-                            # เปลี่ยนมาเริ่มลบข้อมูลเก่าตั้งแต่แถวที่ 30 ลงไป เพื่อรักษาหัวตารางประวัติในแถว 29 ไว้
-                            # เปลี่ยนจากลบแถว เป็นการล้างเฉพาะค่าข้อมูล เพื่อรักษา Dropdown และฟอร์แมตไว้
                             if len(prev_data) >= 30:
                                 range_to_clear = f"A30:D{len(prev_data)}"
                                 new_sheet.batch_clear([range_to_clear])
                             
-                            # เพิ่มคำสั่งนี้ต่อท้าย เพื่อบังคับให้เดือนใหม่มีแถวสแตนด์บายรอไว้อย่างน้อย 100 แถวเสมอ
                             current_rows = new_sheet.row_count
                             if current_rows < 100:
                                 new_sheet.add_rows(100 - current_rows)
