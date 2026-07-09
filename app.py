@@ -632,23 +632,40 @@ st.markdown("---")
 # --- 5. ตรวจสอบเงินในมือ (เพิ่มใหม่แบบแก้ไขได้) ---
 st.subheader("💵 ตรวจสอบเงินในมือ")
 
+# 1. ดึงค่าจาก Google Sheets (F5 = เงินโอน, F6 = เงินสด) มารวดเดียว
+f_vals = sheet.get("F5:F6")
+
+try:
+    bank_from_f5 = float(str(f_vals[0][0]).replace(',', '')) if len(f_vals) > 0 and len(f_vals[0]) > 0 else 0.0
+except:
+    bank_from_f5 = 0.0
+
+try:
+    cash_from_f6 = float(str(f_vals[1][0]).replace(',', '')) if len(f_vals) > 1 and len(f_vals[1]) > 0 else 0.0
+except:
+    cash_from_f6 = 0.0
+
+# 2. กำหนด Key สำหรับช่องกรอกข้อมูล
 c_key = f"cash_{selected_month}"
 b_key = f"bank_{selected_month}"
 
-if c_key not in st.session_state: st.session_state[c_key] = str(cash_on_hand)
-if b_key not in st.session_state: st.session_state[b_key] = str(bank_transfer)
+# 3. ยึดค่าเริ่มต้นจาก F6 และ F5 
+if c_key not in st.session_state: st.session_state[c_key] = str(cash_from_f6)
+if b_key not in st.session_state: st.session_state[b_key] = str(bank_from_f5)
 
 col_cash1, col_cash2 = st.columns(2)
 with col_cash1:
-    st.text_input("เงินสด (พิมพ์แล้วกด Enter)", key=c_key, on_change=auto_update, args=(c_key, 'B11'))
+    # แก้เป้าหมายการบันทึก (args) ให้ชี้ไปที่ F6
+    st.text_input("เงินสด (พิมพ์แล้วกด Enter)", key=c_key, on_change=auto_update, args=(c_key, 'F6'))
 with col_cash2:
-    st.text_input("เงินโอน (พิมพ์แล้วกด Enter)", key=b_key, on_change=auto_update, args=(b_key, 'B12'))
+    # แก้เป้าหมายการบันทึก (args) ให้ชี้ไปที่ F5
+    st.text_input("เงินโอน (พิมพ์แล้วกด Enter)", key=b_key, on_change=auto_update, args=(b_key, 'F5'))
 
 try: cash_val = float(st.session_state[c_key])
-except: cash_val = cash_on_hand
+except: cash_val = cash_from_f6
 
 try: bank_val = float(st.session_state[b_key])
-except: bank_val = bank_transfer
+except: bank_val = bank_from_f5
 
 new_actual_total = cash_val + bank_val
 expected_cash = remaining_balance
@@ -658,7 +675,6 @@ col_tot1, col_tot2 = st.columns(2)
 with col_tot1:
     st.metric("เงินที่มีจริงตอนนี้", f"{new_actual_total:,.2f} ฿")
 with col_tot2:
-    # ส่งค่า diff เป็นตัวเลข (float) เข้าไปที่ delta ตรงๆ ระบบจะใส่สีและลูกศรให้เนียนๆ เองครับ
     st.metric("ส่วนต่าง", f"{diff:,.2f} ฿", delta=float(diff))
 
 # =====================================================================
