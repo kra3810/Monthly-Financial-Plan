@@ -237,20 +237,26 @@ def update_emg_monthly(key, current_b13_val):
 # --- 2. แถบข้าง (Sidebar) ---
 with st.sidebar:
     st.title("⚙️ การตั้งค่าคงที่")
+    # --- 2. แถบข้าง (Sidebar) ---
+with st.sidebar:
+    st.title("⚙️ การตั้งค่าคงที่")
     st.subheader("📥 เงินสนับสนุนจากที่บ้าน")
-    
+
     m_key = f"m_allow_{selected_month}"
     a_key = f"a_allow_{selected_month}"
-    e_key = f"e_allow_{selected_month}"
     
+    # (ลบตัวแปร e_key บรรทัดเดิมทิ้งไปได้เลย)
+
     if m_key not in st.session_state: st.session_state[m_key] = str(monthly_allowance)
     if a_key not in st.session_state: st.session_state[a_key] = str(accumulated_allowance)
-    if e_key not in st.session_state: st.session_state[e_key] = str(emergency_fund)
-        
+
     st.text_input("รับเงินจากบ้าน (พิมพ์สมการแล้วกด Enter)", key=m_key, on_change=auto_update, args=(m_key, 'F2'))
     st.text_input("เงินสะสม (พิมพ์สมการแล้วกด Enter)", key=a_key, on_change=auto_update, args=(a_key, 'B18'))
-    st.text_input("เงินสำรองฉุกเฉิน (พิมพ์สมการแล้วกด Enter)", key=e_key, on_change=emergency_update_func, args=(e_key, sep_emergency))
+    
+    # (ลบช่อง st.text_input "เงินสำรองฉุกเฉิน" อันเก่าทิ้ง)
 
+    # ---------------------------------------------------------
+    # เอาโค้ดชุดใหม่มาวางตรงนี้
     st.subheader("🛡️ จัดการเงินสำรองฉุกเฉิน")
     
     current_c26 = val(25, 2) # ดึงยอดเดือนนี้
@@ -263,7 +269,8 @@ with st.sidebar:
     
     st.text_input("1. ยอดสะสมรวม (เงินนอก/ดึงเงินออก)", key=e_total_key, on_change=update_emg_total, args=(e_total_key,))
     st.text_input("2. หักจากงบเดือนนี้เข้าสำรอง (C26)", key=e_month_key, on_change=update_emg_monthly, args=(e_month_key, sep_emergency))
-    
+    # ---------------------------------------------------------
+
     # --- หมวดหมู่ใหม่: รายได้ส่วนตัว ---
     st.sidebar.markdown("---")
     st.sidebar.markdown("💼 **รายได้ส่วนตัว (Personal Income)**")
