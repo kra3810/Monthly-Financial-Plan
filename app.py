@@ -204,30 +204,35 @@ def auto_update(key, cell):
         st.toast(f"❌ รูปแบบสมการไม่ถูกต้อง หรือมีตัวอักษรปนอยู่")
         print(f"auto_update error ({key}): {e}")
 
-def emergency_update_func(key, current_b13_val):
+def update_emg_total(key):
+    # สำหรับเบิกเงินใช้ หรือมีเงินจากแหล่งอื่นเข้ามา (อัปเดตแค่ B13 ไม่ยุ่งกับงบเดือน)
     try:
-        raw_str = str(st.session_state[key])
-        total_val = safe_eval(raw_str) # ยอดสะสมรวมทั้งหมด
+        new_total = safe_eval(st.session_state[key])
+        sheet.update_acell('B13', new_total)
+        st.session_state[key] = str(new_total)
+        st.toast(f"✅ อัปเดตยอดสะสมสุทธิเป็น {new_total:,.2f} เรียบร้อย!")
+        st.rerun()
+    except Exception as e:
+        st.toast(f"❌ รูปแบบสมการไม่ถูกต้อง")
 
-        # ดึงเฉพาะตัวเลขหลังเครื่องหมาย + (ค่าที่คุณกรอกจริงในเดือนนี้)
-        if '+' in raw_str:
-            added_val = safe_eval(raw_str.split('+')[-1])
-        else:
-            # กรณีพิมพ์ตัวเลขทับไปตรงๆ ให้เอา (ยอดใหม่ - ยอดเดิม)
-            added_val = total_val - float(current_b13_val)
-
-        # ยิงข้อมูล 2 ช่องพร้อมกัน: B13 (ยอดสะสมรวม) และ C26 (ยอดของเดือนนี้)
+def update_emg_monthly(key, current_b13_val):
+    # สำหรับหักเงินจากงบเดือนนี้ (อัปเดต C26 และทบเข้า B13 อัตโนมัติ)
+    try:
+        added_val = safe_eval(st.session_state[key])
+        current_c26 = val(25, 2) # ดึงค่ายอดที่เคยกันไว้เดือนนี้จาก C26 (Index: แถว 25, คอลัมน์ 2)
+        diff = added_val - current_c26 # หาผลต่างเพื่อนำไปบวกเพิ่ม/ลด ออกจากยอดสะสม B13
+        
+        new_total = float(current_b13_val) + diff
+        
         updates = [
-            {'range': 'B13', 'values': [[total_val]]},
+            {'range': 'B13', 'values': [[new_total]]},
             {'range': 'C26', 'values': [[added_val]]}
         ]
         sheet.batch_update(updates)
-
-        st.session_state[key] = str(total_val)
-        st.toast(f"✅ บันทึกยอดรวมลง B13 และยอดที่เพิ่ม ({added_val}) ลง C26 เรียบร้อย!")
+        st.toast(f"✅ กันเงินเดือนนี้ {added_val:,.2f} เรียบร้อย!")
+        st.rerun()
     except Exception as e:
-        st.toast(f"❌ รูปแบบไม่ถูกต้อง")
-        print(f"emg_update error: {e}")
+        st.toast(f"❌ รูปแบบสมการไม่ถูกต้อง")
 
 # --- 2. แถบข้าง (Sidebar) ---
 with st.sidebar:
@@ -245,6 +250,19 @@ with st.sidebar:
     st.text_input("รับเงินจากบ้าน (พิมพ์สมการแล้วกด Enter)", key=m_key, on_change=auto_update, args=(m_key, 'F2'))
     st.text_input("เงินสะสม (พิมพ์สมการแล้วกด Enter)", key=a_key, on_change=auto_update, args=(a_key, 'B18'))
     st.text_input("เงินสำรองฉุกเฉิน (พิมพ์สมการแล้วกด Enter)", key=e_key, on_change=emergency_update_func, args=(e_key, sep_emergency))
+
+    st.subheader("🛡️ จัดการเงินสำรองฉุกเฉิน")
+    
+    current_c26 = val(25, 2) # ดึงยอดเดือนนี้
+    
+    e_total_key = f"e_total_{selected_month}"
+    e_month_key = f"e_month_{selected_month}"
+    
+    if e_total_key not in st.session_state: st.session_state[e_total_key] = str(sep_emergency)
+    if e_month_key not in st.session_state: st.session_state[e_month_key] = str(current_c26)
+    
+    st.text_input("1. ยอดสะสมรวม (เงินนอก/ดึงเงินออก)", key=e_total_key, on_change=update_emg_total, args=(e_total_key,))
+    st.text_input("2. หักจากงบเดือนนี้เข้าสำรอง (C26)", key=e_month_key, on_change=update_emg_monthly, args=(e_month_key, sep_emergency))
     
     # --- หมวดหมู่ใหม่: รายได้ส่วนตัว ---
     st.sidebar.markdown("---")
