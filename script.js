@@ -5,11 +5,11 @@
 
   const CONFIG = window.FINANCE_CONFIG || {};
   const AUTH_SESSION_KEY = "kla-finance-google-session";
-  const saveAuthSession = () => { try { sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({ token: state.token, expiresAt: state.tokenExpiresAt })); } catch (_) {} };
-  const clearAuthSession = () => { try { sessionStorage.removeItem(AUTH_SESSION_KEY); } catch (_) {} };
+  const saveAuthSession = () => { try { localStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({ token: state.token, expiresAt: state.tokenExpiresAt })); } catch (_) {} };
+  const clearAuthSession = () => { try { localStorage.removeItem(AUTH_SESSION_KEY); } catch (_) {} };
   const restoreAuthSession = () => {
     try {
-      const saved = JSON.parse(sessionStorage.getItem(AUTH_SESSION_KEY) || "null");
+      const saved = JSON.parse(localStorage.getItem(AUTH_SESSION_KEY) || "null");
       if (saved?.token && Number(saved.expiresAt) > Date.now() + 5000) { state.token = saved.token; state.tokenExpiresAt = Number(saved.expiresAt); return true; }
     } catch (_) {}
     clearAuthSession();
@@ -270,6 +270,7 @@
       await loadMonth();
       await loadHistoryData();
       $("#welcome-user").textContent = "เชื่อมต่อกับ " + (state.spreadsheet.properties?.title || "Google Sheets") + " แล้ว";
+      setConnection(true, "เชื่อมต่อ Google Sheets แล้ว");
       showApp(true);
     } catch (error) {
       toast("โหลดข้อมูลไม่สำเร็จ: " + error.message, "error", 6500);
