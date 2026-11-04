@@ -1,0 +1,15 @@
+{
+  "id": "./",
+  "name": "Kla Finance — แผนการเงิน",
+  "short_name": "Kla Finance",
+  "description": "ระบบจัดการแผนการเงินรายเดือน",
+  "lang": "th",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f5f7fa",
+  "theme_color": "#285fae",
+  "icons": [
+    { "src": "./icons/app-icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
