@@ -48,7 +48,7 @@
     const el = $("#connection-state");
     el.classList.toggle("connected", connected);
     el.innerHTML = "<i></i>" + escapeHtml(label || (connected ? "เชื่อมต่อแล้ว" : "ยังไม่ได้เชื่อมต่อ"));
-    $("#auth-button").textContent = connected ? "เปลี่ยนบัญชี Google" : "เข้าสู่ระบบ Google";
+    $("#auth-button").textContent = connected ? "ออกจากระบบ" : "เข้าสู่ระบบ Google";
     $("#auth-button").dataset.originalLabel = $("#auth-button").textContent;
   }
 
@@ -1213,7 +1213,7 @@
         if (settings) settings.open = !window.matchMedia("(max-width: 900px)").matches;
       });
     }, { passive: true });
-    $("#auth-button").addEventListener("click", login);
+    $("#auth-button").addEventListener("click", () => state.token ? logout() : login());
     $("#welcome-login")?.addEventListener("click", login);
     $("#refresh-button").addEventListener("click",()=>runSave(async()=>{await bootstrap();toast("โหลดข้อมูลล่าสุดแล้ว","success");}));
     $("#month-select").addEventListener("change",async event=>{
