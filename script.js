@@ -4,6 +4,17 @@
   "use strict";
 
   const CONFIG = window.FINANCE_CONFIG || {};
+  const AUTH_SESSION_KEY = "kla-finance-google-session";
+  const saveAuthSession = () => { try { sessionStorage.setItem(AUTH_SESSION_KEY, JSON.stringify({ token: state.token, expiresAt: state.tokenExpiresAt })); } catch (_) {} };
+  const clearAuthSession = () => { try { sessionStorage.removeItem(AUTH_SESSION_KEY); } catch (_) {} };
+  const restoreAuthSession = () => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(AUTH_SESSION_KEY) || "null");
+      if (saved?.token && Number(saved.expiresAt) > Date.now() + 5000) { state.token = saved.token; state.tokenExpiresAt = Number(saved.expiresAt); return true; }
+    } catch (_) {}
+    clearAuthSession();
+    return false;
+  };
   const $ = (selector, root = document) => root.querySelector(selector);
   const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
   const MONTHS = ["ม.ค.", "ก.พ.", "มี.ค.", "เม.ย.", "พ.ค.", "มิ.ย.", "ก.ค.", "ส.ค.", "ก.ย.", "ต.ค.", "พ.ย.", "ธ.ค."];
@@ -107,9 +118,15 @@
         callback: async response => {
           state.authPending = false;
           setAuthPending(false);
-          if (response.error || !response.access_token) { toast("เข้าสู่ระบบไม่สำเร็จ: " + (response.error || "ไม่ได้รับ Access Token"), "error"); return; }
+          if (response.error || !response.access_token) {
+            if (!state.silentAuth) toast("เข้าสู่ระบบไม่สำเร็จ: " + (response.error || "ไม่ได้รับ Access Token"), "error");
+            state.silentAuth = false;
+            return;
+          }
+          state.silentAuth = false;
           state.token = response.access_token;
           state.tokenExpiresAt = Date.now() + (Number(response.expires_in || 3600) - 60) * 1000;
+          saveAuthSession();
           setConnection(true, "เชื่อมต่อ Google Sheets แล้ว");
           showApp(true);
           await bootstrap();
@@ -117,9 +134,19 @@
         error_callback: error => {
           state.authPending = false;
           setAuthPending(false);
-          toast("Google OAuth: " + (error.message || error.type), "error");
+          if (!state.silentAuth) toast("Google OAuth: " + (error.message || error.type), "error");
+          state.silentAuth = false;
         }
       });
+      if (restoreAuthSession()) {
+        setConnection(true, "เชื่อมต่อ Google Sheets แล้ว");
+        showApp(true);
+        bootstrap();
+      } else {
+        state.silentAuth = true;
+        try { state.tokenClient.requestAccessToken({ prompt: "" }); }
+        catch (_) { state.silentAuth = false; }
+      }
     };
     waitForGoogle();
   }
@@ -157,6 +184,7 @@
 
   function logout() {
     if (state.token && window.google?.accounts?.oauth2) google.accounts.oauth2.revoke(state.token, () => {});
+    clearAuthSession();
     state.token = null; state.tokenExpiresAt = 0; state.user = null; state.data = []; state.history = []; state.summary = []; state.activeView = "overview";
     showApp(false); setConnection(false);
     toast("ออกจากระบบแล้ว", "success");
@@ -164,7 +192,7 @@
 
   async function api(path, options = {}) {
     if (!state.token) throw new Error("กรุณาเข้าสู่ระบบ Google ใหม่");
-    if (Date.now() > state.tokenExpiresAt) { state.token = null; showApp(false); setConnection(false, "เซสชันหมดอายุ"); throw new Error("Access Token หมดอายุ กรุณาเข้าสู่ระบบใหม่"); }
+    if (Date.now() > state.tokenExpiresAt) { clearAuthSession(); state.token = null; showApp(false); setConnection(false, "เซสชันหมดอายุ"); throw new Error("Access Token หมดอายุ กรุณาเข้าสู่ระบบใหม่"); }
     const response = await fetch("https://sheets.googleapis.com/v4/spreadsheets/" + CONFIG.SPREADSHEET_ID + path, {
       ...options,
       headers: { Authorization: "Bearer " + state.token, "Content-Type": "application/json", ...(options.headers || {}) }
@@ -172,7 +200,7 @@
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
       const reason = payload.error?.message || response.statusText || "Google Sheets API error";
-      if (response.status === 401) { state.token = null; showApp(false); setConnection(false, "ต้องเข้าสู่ระบบใหม่"); }
+      if (response.status === 401) { clearAuthSession(); state.token = null; showApp(false); setConnection(false, "ต้องเข้าสู่ระบบใหม่"); }
       throw new Error(reason);
     }
     return payload;
