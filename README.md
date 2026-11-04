@@ -16,7 +16,7 @@
 3. ไปที่ **Google Auth Platform → Branding** ตั้งชื่อแอปและอีเมลติดต่อ
 4. ไปที่ **Google Auth Platform → Audience** เลือก External สำหรับบัญชี Google ทั่วไป แล้วเพิ่มบัญชีที่จะใช้ทดสอบใน Test users (ถ้าเป็น Google Workspace อาจเลือก Internal ตามนโยบายองค์กร)
 5. ไปที่ **Google Auth Platform → Clients → Create client → Web application**
-6. ใน **Authorized JavaScript origins** เพิ่ม `http://localhost:8000` สำหรับทดสอบในเครื่อง และเพิ่ม `https://USERNAME.github.io` เมื่อทราบ GitHub Pages URL จริง (ใส่เฉพาะ origin ไม่ใส่ path เช่น `/repository/`)
+6. ใน **Authorized JavaScript origins** เพิ่ม `http://localhost:8000` สำหรับทดสอบในเครื่อง และเพิ่ม `https://kra3810.github.io` (GitHub Pages origin ของโปรเจกต์นี้) (ใส่เฉพาะ origin ไม่ใส่ path เช่น `/repository/`)
 7. สำหรับ Google Identity Services Token Client ที่ใช้ในเว็บนี้ ไม่ต้องเพิ่ม Authorized redirect URI และไม่ต้องใช้ Client Secret
 8. สร้าง Client แล้วคัดลอกเฉพาะ **Client ID** ลง `GOOGLE_CLIENT_ID` ใน `config.js`
 9. คัดลอก Spreadsheet ID จากส่วนระหว่าง `/d/` และ `/edit` ใน URL ของชีต แล้วใส่ใน `SPREADSHEET_ID`
@@ -57,10 +57,10 @@
 
 ## เผยแพร่ GitHub Pages
 
-1. Push ไฟล์ทั้ง 5 ไฟล์นี้ไปยัง repository
+1. Push ไฟล์เว็บและไฟล์ตั้งค่าที่จำเป็นไปยัง repository
 2. เปิด Repository Settings → Pages
 3. เลือก Deploy from a branch และเลือก branch/folder ที่เก็บไฟล์
-4. เพิ่ม origin ของเว็บไซต์ที่ได้ลงใน OAuth Client ID
+4. เพิ่ม Authorized JavaScript origin เป็น `https://kra3810.github.io` ใน OAuth Client ID
 5. เปิด URL เว็บไซต์และ Login ด้วยบัญชีที่มีสิทธิ์ใน Spreadsheet
 
 ## ขอบเขตที่ควรทดสอบก่อนใช้กับข้อมูลจริง
