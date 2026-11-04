@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#f5f7fa">
+  <meta name="description" content="ระบบจัดการแผนการเงินรายเดือน">
+  <title>Kla Finance — แผนการเงิน</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="./style.css">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
+  <script src="./config.js" defer></script>
+  <script src="./script.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <a class="brand" href="./" aria-label="Kla Finance home">
+        <span class="brand-mark">K</span>
+        <span><strong>Kla Finance</strong><small>PERSONAL FINANCE</small></span>
+      </a>
+      <div class="topbar-actions">
+        <span id="connection-state" class="connection-state"><i></i> ยังไม่ได้เชื่อมต่อ</span>
+        <button id="auth-button" class="button button-primary">เข้าสู่ระบบ Google</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="welcome-panel" class="welcome-panel">
+        <div class="welcome-copy">
+          <span class="eyebrow">YOUR MONEY, IN CONTROL</span>
+          <h1>จัดการการเงิน<br><span>ให้ง่ายขึ้นทุกเดือน</span></h1>
+          <p>เชื่อมต่อ Google Sheets ของคุณเพื่อดูงบประมาณ รายจ่าย และเงินสำรองได้ในที่เดียว</p>
+          <button id="welcome-login" class="button button-primary button-large">เชื่อมต่อบัญชี Google <span aria-hidden="true">→</span></button>
+          <p class="privacy-note">ข้อมูลยังคงอยู่ใน Google Sheets ของคุณ · ไม่มีเซิร์ฟเวอร์เก็บข้อมูลกลาง</p>
+        </div>
+        <div class="welcome-art" aria-hidden="true">
+          <div class="art-card art-card-main"><span class="art-label">AVAILABLE BALANCE</span><strong>฿ 12,840</strong><div class="art-bars"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div><small>MONTHLY OVERVIEW</small></div>
+          <div class="art-card art-card-float"><span class="art-dot"></span><div><b>Budget health</b><small>You're on track</small></div><strong>82%</strong></div>
+          <div class="art-orbit"></div>
+        </div>
+      </section>
+
+      <section id="app-panel" class="hidden">
+        <div class="app-workspace">
+          <aside id="finance-sidebar-slot" class="app-sidebar" aria-label="เมนูและการตั้งค่าการเงิน">
+            <div class="sidebar-loading">Kla Finance</div>
+          </aside>
+          <div class="app-content">
+            <div class="page-heading">
+              <div><span class="eyebrow">MONTHLY OVERVIEW</span><h1>ภาพรวมการเงิน</h1><p id="welcome-user" class="muted">ยินดีต้อนรับ</p></div>
+              <div class="month-tools">
+                <label class="select-wrap"><span>เดือนที่กำลังดู</span><select id="month-select" aria-label="เลือกเดือน"></select></label>
+                <button id="refresh-button" class="button button-quiet" title="โหลดข้อมูลใหม่">↻ <span>รีเฟรช</span></button>
+                <button id="close-month-button" class="button button-primary">ปิดยอดและขึ้นเดือนใหม่</button>
+              </div>
+            </div>
+            <div id="dashboard-content">
+              <div class="loading-card"><span class="spinner"></span> กำลังโหลดข้อมูลจาก Google Sheets...</div>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <footer class="footer"><span>Kla Finance</span><span>ข้อมูลของคุณจัดเก็บใน Google Sheets</span></footer>
+  </div>
+
+  <div id="toast-region" class="toast-region" aria-live="polite"></div>
+  <dialog id="confirm-dialog" class="confirm-dialog">
+    <form method="dialog">
+      <span class="eyebrow">MONTH-END PROCESS</span>
+      <h2>ยืนยันการปิดยอดเดือน?</h2>
+      <p id="confirm-message">ระบบจะบันทึกสถิติและสร้าง Worksheet ของเดือนถัดไปจากเดือนปัจจุบัน</p>
+      <div class="dialog-actions"><button class="button button-quiet" value="cancel">ยกเลิก</button><button id="confirm-close-month" class="button button-primary" value="confirm">ยืนยันปิดยอด</button></div>
+    </form>
+  </dialog>
+</body>
+</html>

@@ -1,0 +1,17 @@
+# Python / Streamlit local environment
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.streamlit/
+secrets.toml
+
+# Local development and test artifacts
+.tmp-*
+*.log
+.DS_Store
+
+# Backups and local-only data
+backups/
+*.bak
+*.backup
