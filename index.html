@@ -3,9 +3,11 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <meta name="theme-color" content="#285fae">
+  <meta name="theme-color" content="#071c68">
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/svg+xml" href="./icons/app-icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/app-icon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
   <meta name="description" content="ระบบจัดการแผนการเงินรายเดือน">
   <title>Kla Finance — แผนการเงิน</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,7 +16,7 @@
   <link rel="stylesheet" href="./style.css">
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="./config.js" defer></script>
-  <script src="./script.js?v=20261104-logout-button-v1" defer></script>
+  <script src="./script.js?v=20261104-connection-status-v3" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -79,5 +81,12 @@
       <div class="dialog-actions"><button class="button button-quiet" value="cancel">ยกเลิก</button><button id="confirm-close-month" class="button button-primary" value="confirm">ยืนยันปิดยอด</button></div>
     </form>
   </dialog>
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./sw.js", { scope: "./" }).catch((error) => console.warn("PWA service worker registration failed:", error));
+      });
+    }
+  </script>
 </body>
 </html>

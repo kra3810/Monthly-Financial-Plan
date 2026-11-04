@@ -1,14 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <defs>
-    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1678f4"/><stop offset=".52" stop-color="#0646c8"/><stop offset="1" stop-color="#092b91"/></linearGradient>
-    <linearGradient id="shine" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#fff"/><stop offset="1" stop-color="#dceaff"/></linearGradient>
-    <linearGradient id="bars" x1="0" y1="0" x2="0" y2="1"><stop stop-color="#8fe8ff"/><stop offset="1" stop-color="#2389f5"/></linearGradient>
-    <linearGradient id="arrow" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#9beeff"/><stop offset="1" stop-color="#fff"/></linearGradient>
-  </defs>
-  <rect width="512" height="512" rx="112" fill="url(#bg)"/>
-  <path d="M0 0h512v105C370 158 218 131 0 264z" fill="#fff" opacity=".045"/>
-  <path d="M102 112h66v108l111-108h83L235 250l127 150h-88L168 279v121h-66z" fill="url(#shine)"/>
-  <g fill="url(#bars)" opacity=".88"><rect x="314" y="292" width="40" height="108" rx="11"/><rect x="365" y="250" width="40" height="150" rx="11"/></g>
-  <path d="M113 355c49-70 131-86 219-134l78-48-7 47 49-79-91 18 39 20-82 48c-83 48-151 67-205 128z" fill="url(#arrow)"/>
-  <path d="M0 426c130-45 278-15 512-104v190H0z" fill="#001e78" opacity=".14"/>
+ <defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#071c68"/><stop offset="1" stop-color="#063fc0"/></linearGradient>
+  <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#168cff"/><stop offset=".55" stop-color="#5ceaff"/><stop offset="1" stop-color="#0877ef"/></linearGradient>
+  <linearGradient id="arrow" x1="0" y1="1" x2="1" y2="0"><stop stop-color="#087cff"/><stop offset="1" stop-color="#a6f8ff"/></linearGradient>
+ </defs>
+ <rect width="512" height="512" fill="#051436"/>
+ <circle cx="256" cy="256" r="246" fill="url(#rim)"/>
+ <circle cx="256" cy="256" r="230" fill="url(#bg)"/>
+ <path d="M112 105h47v113l115-113h67L225 253l126 154h-62L159 284v123h-47z" fill="#fff"/>
+ <rect x="321" y="292" width="36" height="115" rx="10" fill="#45c5ff"/>
+ <rect x="367" y="261" width="36" height="146" rx="10" fill="#279cff"/>
+ <path d="M113 335C174 265 265 292 363 213l36-29-4 35 47-70-83 14 25 17-39 30C248 287 172 273 113 335z" fill="url(#arrow)"/>
 </svg>
