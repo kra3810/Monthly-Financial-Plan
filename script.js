@@ -121,6 +121,7 @@
           if (response.error || !response.access_token) {
             if (!state.silentAuth) toast("เข้าสู่ระบบไม่สำเร็จ: " + (response.error || "ไม่ได้รับ Access Token"), "error");
             state.silentAuth = false;
+            setConnection(false, "ยังไม่ได้เชื่อมต่อ");
             return;
           }
           state.silentAuth = false;
@@ -136,6 +137,7 @@
           setAuthPending(false);
           if (!state.silentAuth) toast("Google OAuth: " + (error.message || error.type), "error");
           state.silentAuth = false;
+          setConnection(false, "ยังไม่ได้เชื่อมต่อ");
         }
       });
       if (restoreAuthSession()) {
@@ -1232,7 +1234,7 @@
 
   function start() {
     bindGlobalEvents();
-    setConnection(false);
+    setConnection(false, "กำลังตรวจสอบการเชื่อมต่อ...");
     initAuth();
   }
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded",start);
