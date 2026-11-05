@@ -1,4 +1,4 @@
-const CACHE_NAME = 'kla-finance-shell-v2-logo';
+const CACHE_NAME = 'kla-finance-shell-v3-circle-icons';
 const APP_SHELL = './';
 
 self.addEventListener('install', (event) => {
